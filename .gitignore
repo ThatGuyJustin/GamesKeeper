@@ -1,0 +1,5 @@
+.vscode
+config.yaml
+src/
+GamesKeeper/plugins/__init__.py
+*.pyc

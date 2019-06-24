@@ -1,0 +1,18 @@
+token: 'BOT_TOKEN_HERE'
+
+bot:
+  commands_enabled: false
+  plugins:
+  - GamesKeeper.plugins.core
+  - GamesKeeper.plugins.settings
+
+web:
+  SECRET_KEY: ''
+  DOMAIN: ''
+  discord:
+    CLIENT_ID: ''
+    REDIRECT_URI: 'https://DOMAIN.COM/api/auth/discord/callback'
+    CLIENT_SECRET: ''
+    API_BASE_URL: 'https://discordapp.com/api'
+    TOKEN_URL: 'https://discordapp.com/api/oauth2/token'
+    AUTH_URL: 'https://discordapp.com/oauth2/authorize'
