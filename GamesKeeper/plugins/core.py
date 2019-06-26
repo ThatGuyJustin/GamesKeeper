@@ -16,6 +16,8 @@ from disco.types.user import GameType, Status, Game
 from disco.types.channel import ChannelType
 from disco.util.sanitize import S
 
+from GamesKeeper.db import init_db
+
 PY_CODE_BLOCK = '```py\n{}\n```'
 
 TEMP_PREFIX = "!"
@@ -34,7 +36,7 @@ TEMP_CanStartGames = [
 
 class CorePlugin(Plugin):
     def load(self, ctx):
-        # start_db()
+        init_db()
         self.bot.add_plugin = self.our_add_plugin
         self.guilds = ctx.get('guilds', {})
         super(CorePlugin, self).load(ctx)

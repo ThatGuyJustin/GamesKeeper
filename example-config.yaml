@@ -6,6 +6,13 @@ bot:
   - GamesKeeper.plugins.core
   - GamesKeeper.plugins.settings
 
+postgres:
+  host: ''
+  port: '5432'
+  database: 'gameskeeper'
+  username: ''
+  password: ''
+
 web:
   SECRET_KEY: ''
   DOMAIN: ''
