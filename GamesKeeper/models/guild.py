@@ -31,22 +31,43 @@ class Guild(BaseModel):
     
     def enabled_games_emotes(self):
         game_types = {
-            1 << 0: "Uno",
-            1 << 1: "Connect4",
-            1 << 2: "TicTacToe",
-            1 << 3: "HangMan",
-            1 << 4: "2048",
-            1 << 5: "Trivia",
+            1 << 0: "<:uno:593494134870900736>", #Uno
+            1 << 1: "<:connectfour:593494135378542592>", #Connect4
+            1 << 2: "<:tictactoe:593494134535225344>", #TicTacToe
+            1 << 3: "<:hangman:593494133738438656>", #Hangman
+            1 << 4: "<:2048:593494134593945611>", #2048
+            1 << 5: "<:trivia:593506394058260480>", #Trivia
         }
 
+        if self.enabled_games == 0:
+            return ['`None`']
+        
         games = []
 
         for i in range(10):
             if self.enabled_games & 1 << i:
                 games.append(game_types[1 << i])
-        
+
         return games
     
+    def disabled_games_emotes(self):
+        game_types = {
+            1 << 0: "<:uno:593494134870900736>", #Uno
+            1 << 1: "<:connectfour:593494135378542592>", #Connect4
+            1 << 2: "<:tictactoe:593494134535225344>", #TicTacToe
+            1 << 3: "<:hangman:593494133738438656>", #Hangman
+            1 << 4: "<:2048:593494134593945611>", #2048
+            1 << 5: "<:trivia:593506394058260480>", #Trivia
+        }
+        
+        games = []
+
+        for i in range(len(game_types)):
+            if not self.enabled_games & 1 << i:
+                games.append(game_types[1 << i])
+
+        return games
+
     def enabled_games_strings(self):
         game_types = {
             1 << 0: "Uno",

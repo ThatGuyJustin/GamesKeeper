@@ -28,6 +28,12 @@ class SettingsPlugin(Plugin):
 
     @Plugin.command('settings', level=CommandLevels.ADMIN)
     def list_settings(self, event):
+        settings_msg = """
+        __**Prefix**__: {prefix}
+        __**Referee Role**__: {rr}
+        __**Games Category**__: {gc}
+        __**Spectator Roles**__: {sr}
+        """
         settings = Guild.using_id(event.guild.id)
 
         games_category = None
@@ -39,12 +45,15 @@ class SettingsPlugin(Plugin):
             for x in settings.spectator_roles:
                 spectator_roles.append('<@&{}>'.format(x))
         embed = MessageEmbed()
-        embed.color = 0xFF0000
-        embed.add_field(name='Prefix', value='{}'.format(settings.prefix), inline=True)
-        embed.add_field(name='Games Category', value='{} (`{}`)'.format(games_category.name, games_category.id) if settings.games_category else '`None`', inline=True)
-        embed.add_field(name='Spectator Roles', value='{}'.format('`None`' if len(spectator_roles) == 0 else ', '.join(spectator_roles)), inline=True)
-        embed.add_field(name='Referee Role', value='{}'.format('`None`' if settings.referee_role == None else '<@&' + str(settings.referee_role) + '>'), inline=True)
-        embed.add_field(name='Enabled Games', value='`{}`'.format(settings.enabled_games_emotes()))
+        # embed.color = 0xFF0000
+        embed.add_field(name='General Settings', value=settings_msg.format(
+            prefix=settings.prefix, 
+            rr='{}'.format('`None`' if settings.referee_role == None else '<@&' + str(settings.referee_role) + '>'), 
+            gc='{} (`{}`)'.format(games_category.name, games_category.id) if settings.games_category else '`None`',
+            sr='{}'.format('`None`' if len(spectator_roles) == 0 else ', '.join(spectator_roles))
+        ))
+        embed.add_field(name='Enabled Games', value='{}'.format(''.join(settings.enabled_games_emotes())), inline=True)
+        embed.add_field(name='Disabled Games', value='{}'.format(''.join(settings.disabled_games_emotes())), inline=True)
         return event.msg.reply('', embed=embed)
     
     @Plugin.command('prefix', '<prefix:str...>', aliases=['setprefix', 'changeprefix'], level=CommandLevels.ADMIN, group='update')
