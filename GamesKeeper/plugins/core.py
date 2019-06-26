@@ -21,18 +21,11 @@ from GamesKeeper.models.guild import Guild
 
 PY_CODE_BLOCK = '```py\n{}\n```'
 
-TEMP_PREFIX = "!"
 TEMP_BOT_ADMINS = [
     104376018222972928,
     142721776458137600,
     248245568004947969,
     298516367311765505
-]
-
-TEMP_RefereeRole = 592163609296109568 
-
-TEMP_CanStartGames = [
-    591430861577256990
 ]
 
 class CorePlugin(Plugin):
@@ -107,28 +100,29 @@ class CorePlugin(Plugin):
 
         has_admin = False
 
+        new_setup = False
+        guild = None
+
         if event.message.guild:
+            try:
+                guild = Guild.using_id(event.guild.id)
+            except Guild.DoesNotExist:
+                guild = self.fresh_start(event, event.guild.id)
+                new_setup = True
             if len(event.message.member.roles) > 0:
                 for x in event.message.member.roles:
                     role = event.message.guild.roles.get(x)
                     if role.permissions.can(Permissions.ADMINISTRATOR):
                         event.user_level = 100
                         has_admin = True
-
-            if not has_admin and TEMP_RefereeRole in event.message.member.roles:
-                event.user_level = 50
+            if guild.referee_role:
+                if not has_admin and guild.referee_role in event.message.member.roles:
+                    event.user_level = 50
 
         if event.message.author.bot:
             return
 
         # Grab the list of commands
-        new_setup = False
-        guild = None
-        try:
-           guild = Guild.using_id(event.guild.id)
-        except Guild.DoesNotExist:
-           guild = self.fresh_start(event, event.guild.id)
-           new_setup = True
         commands = list(self.bot.get_commands_for_message(False, {}, guild.prefix, event.message))
 
         #Used for cmd cooldowns
