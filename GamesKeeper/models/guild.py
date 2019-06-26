@@ -28,6 +28,42 @@ class Guild(BaseModel):
     @classmethod
     def using_id(cls, guild_id):
         return Guild.get(guild_id=guild_id)
+    
+    def enabled_games_emotes(self):
+        game_types = {
+            1 << 0: "Uno",
+            1 << 1: "Connect4",
+            1 << 2: "TicTacToe",
+            1 << 3: "HangMan",
+            1 << 4: "2048",
+            1 << 5: "Trivia",
+        }
+
+        games = []
+
+        for i in range(10):
+            if self.enabled_games & 1 << i:
+                games.append(game_types[1 << i])
+        
+        return games
+    
+    def enabled_games_strings(self):
+        game_types = {
+            1 << 0: "Uno",
+            1 << 1: "Connect4",
+            1 << 2: "TicTacToe",
+            1 << 3: "HangMan",
+            1 << 4: "2048",
+            1 << 5: "Trivia",
+        }
+
+        games = []
+
+        for i in range(10):
+            if self.enabled_games & 1 << i:
+                games.append(game_types[1 << i])
+        
+        return games
 
 
 # Prefix text

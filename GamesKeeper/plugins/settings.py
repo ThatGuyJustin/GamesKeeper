@@ -44,11 +44,8 @@ class SettingsPlugin(Plugin):
         embed.add_field(name='Games Category', value='{} (`{}`)'.format(games_category.name, games_category.id) if settings.games_category else '`None`', inline=True)
         embed.add_field(name='Spectator Roles', value='{}'.format('`None`' if len(spectator_roles) == 0 else ', '.join(spectator_roles)), inline=True)
         embed.add_field(name='Referee Role', value='{}'.format('`None`' if settings.referee_role == None else '<@&' + str(settings.referee_role) + '>'), inline=True)
-        embed.add_field(name='Enabled Games', value='`{}`'.format(self.util_int_to_games(settings.enabled_games)))
+        embed.add_field(name='Enabled Games', value='`{}`'.format(settings.enabled_games_emotes()))
         return event.msg.reply('', embed=embed)
-    
-    def util_int_to_games(self, int):
-        return '*Not implemented yet*'
     
     @Plugin.command('prefix', '<prefix:str...>', aliases=['setprefix', 'changeprefix'], level=CommandLevels.ADMIN, group='update')
     def change_prefix(self, event, prefix):
