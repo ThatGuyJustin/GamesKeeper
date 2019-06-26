@@ -5,25 +5,29 @@ from playhouse.postgres_ext import BinaryJSONField, ArrayField
 
 @BaseModel.register
 class Guild(BaseModel):
-    Guild_id = BigIntegerField(primary_key=True)
-    Owner_id = BigIntegerField(null=False)
-    Prefix = TextField(default="!", null=False)
-    GamesCategory = BigIntegerField(null=True)
-    Spectators = ArrayField(BigIntegerField, null=True, index=False)
-    EnabledGames = IntegerField()
-    RefereeRole = BigIntegerField(null=False)
-    StartGamesrole = BigIntegerField(null=False)
-    BoosterPerks = BooleanField(default=False)
+    guild_id = BigIntegerField(primary_key=True)
+    owner_id = BigIntegerField(null=False)
+    prefix = TextField(default="+", null=False)
+    games_category = BigIntegerField(null=True)
+    spectator_roles = ArrayField(BigIntegerField, null=True, index=False)
+    enabled_games = IntegerField()
+    referee_role = BigIntegerField(null=True)
+    role_allow_startgames = BigIntegerField(null=True)
+    booster_perks = BooleanField(default=False)
 
     class Meta:
         db_table = 'guilds'
 
     @classmethod
-    def GetSettings(cls, guildid):
+    def get_settings(cls, guild_id):
         try:
-            return Guild.get(guild_id=guildid)
+            return Guild.get(guild_id=guild_id)
         except Guild.DoesNotExist:
             return
+    
+    @classmethod
+    def using_id(cls, guild_id):
+        return Guild.get(guild_id=guild_id)
 
 
 # Prefix text

@@ -3,6 +3,7 @@ import yaml
 import re
 import requests
 import functools
+import gevent
 
 from datetime import datetime, timedelta
 
@@ -15,6 +16,8 @@ from disco.types.user import GameType, Status, Game
 from disco.types.channel import ChannelType
 from disco.util.sanitize import S
 
+from GamesKeeper.models.guild import Guild
+
 
 class SettingsPlugin(Plugin):
     global_plugin = True
@@ -25,24 +28,118 @@ class SettingsPlugin(Plugin):
 
     @Plugin.command('settings', level=CommandLevels.ADMIN)
     def list_settings(self, event):
-        #settings = Guilds.get(event.guild.id).get_settings()
-        TMP_SETTINGS = Temp_Settings('!', ['Uno', 'Connect 4', 'Tic-Tac-Toe', 'Trivia', '2048 Rina Edition'], 591431442194497566, [591430764550160394, 592163609296109568])
-        games_catergory = event.guild.channels.get(TMP_SETTINGS.game_catergory)
+        settings = Guild.using_id(event.guild.id)
+
+        games_category = None
+        if settings.games_category:
+            games_category = event.guild.channels.get(settings.games_category)
+        
         spectator_roles = []
-        if len(TMP_SETTINGS.spectator_roles) > 0:
-            for x in TMP_SETTINGS.spectator_roles:
+        if len(settings.spectator_roles) > 0:
+            for x in settings.spectator_roles:
                 spectator_roles.append('<@&{}>'.format(x))
         embed = MessageEmbed()
         embed.color = 0xFF0000
-        embed.add_field(name='Prefix', value='{}'.format(TMP_SETTINGS.prefix), inline=True)
-        embed.add_field(name='Games Catergory', value='{} (`{}`)'.format(games_catergory.name, games_catergory.id), inline=True)
-        embed.add_field(name='Spectator Roles', value='{}'.format(', '.join(spectator_roles)))
-        embed.add_field(name='Enabled Games', value='`{list}`'.format(list=' `, ` '.join(TMP_SETTINGS.games_enabled)))
+        embed.add_field(name='Prefix', value='{}'.format(settings.prefix), inline=True)
+        embed.add_field(name='Games Category', value='{} (`{}`)'.format(games_category.name, games_category.id) if settings.games_category else '`None`', inline=True)
+        embed.add_field(name='Spectator Roles', value='{}'.format('`None`' if len(spectator_roles) == 0 else ', '.join(spectator_roles)), inline=True)
+        embed.add_field(name='Referee Role', value='{}'.format('`None`' if settings.referee_role == None else '<@&' + str(settings.referee_role) + '>'), inline=True)
+        embed.add_field(name='Enabled Games', value='`{}`'.format(self.util_int_to_games(settings.enabled_games)))
         return event.msg.reply('', embed=embed)
+    
+    def util_int_to_games(self, int):
+        return '*Not implemented yet*'
+    
+    @Plugin.command('prefix', '<prefix:str...>', aliases=['setprefix', 'changeprefix'], level=CommandLevels.ADMIN, group='update')
+    def change_prefix(self, event, prefix):
+        guild = Guild.using_id(event.guild.id)
+        if guild.prefix == prefix:
+            return event.msg.reply('`Error:` New prefix matches the current prefix.')
+        else:
+            guild.prefix = prefix
+            guild.save()
+            return event.msg.reply('Prefix has been updated to `{}`!'.format(guild.prefix))
+    
+    @Plugin.command('gamescategory', '<channel:channel>', aliases=['setgamescategory', 'changegamescategory', 'setcategory', 'changecategory', 'gc'], level=CommandLevels.ADMIN, group='update')
+    def change_catergory(self, event, channel):
+        guild = Guild.using_id(event.guild.id)
+        if isinstance(channel, int):
+            if guild.games_category == channel:
+                return event.msg.reply('`Error:` New games category matches the current games category.')
+            else:
+                guild.games_category = channel
+                guild.save()
+                new_channel = event.guild.channels[channel]
+                return event.msg.reply('Updated the games category to **{name}** (`{id}`)'.format(name=new_channel.name, id=new_channel.id))
+        else:
+            if guild.games_category == channel.id:
+                return event.msg.reply('`Error:` New games category matches the current games category.')
+            else:
+                guild.games_category = channel.id
+                guild.save()
+                return event.msg.reply('Updated the games category to **{name}** (`{id}`)'.format(name=channel.name, id=channel.id))
+    
+    @Plugin.command('setreferee', '<role:str...>', aliases=['setref', 'ref', 'referee'], level=CommandLevels.ADMIN, group='update')
+    def update_referee(self, event, role):
+        if role.isdigit():
+            role = int(role)
+        new_role = self.get_role(event, role)
+        if not new_role:
+            return event.msg.reply('`Error:` Role not found, please check ID/Name and try again.')
+        guild = Guild.using_id(event.guild.id)
+        if guild.referee_role == new_role.id:
+            return event.msg.reply('`Error:` New referee role matches the current referee role.')
+        else:
+            guild.referee_role = new_role.id
+            guild.save()
+            return event.msg.reply('Updated the referee role to **{name}** (`{id}`)'.format(name=new_role.name, id=new_role.id))
+    
+    def get_role(self, event, role):
+        if isinstance(role, int):
+            new_role = None
+            try:
+                new_role = event.guild.roles.get(role)
+            except:
+                return None
+            return new_role
+        elif isinstance(role, str):
+            dupes = []
+            for x in event.guild.roles:
+                current = event.guild.roles[x]
+                if current.name.lower() == role.lower():
+                    dupes.append(current)
+            if len(dupes) > 1:
+                for x in dupes:
+                    embed = MessageEmbed()
+                    embed.description = 'Is this role correct? <@&{}>'.format(str(x.id))
+                    embed.add_field(name='ID', value=str(x.id), inline=True)
+                    embed.add_field(name='Position', value=str(x.position), inline=True)
+                    embed.add_field(name='Mentionable', value='{}'.format('Yes' if x.mentionable else 'No'), inline=True)
+                    if x.color:
+                        embed.color = x.color
+                    msg = event.msg.reply('', embed=embed)
+                    msg.chain(False).\
+                        add_reaction('✅').\
+                        add_reaction('⛔')
 
-class Temp_Settings:
-    def __init__(self, prefix, games_enabled, game_catergory, spectator_roles):
-        self.prefix = prefix
-        self.games_enabled = games_enabled
-        self.game_catergory = game_catergory
-        self.spectator_roles = spectator_roles
+                    try:
+                        mra_event = self.wait_for_event(
+                            'MessageReactionAdd',
+                            message_id = msg.id,
+                            conditional = lambda e: (
+                                e.emoji.name in ('✅', '⛔') and
+                                e.user_id == event.author.id
+                            )).get(timeout=10)
+                    except gevent.Timeout:
+                        return
+                    finally:
+                        msg.delete()
+                    
+                    if mra_event.emoji.name != '✅':
+                        continue
+                    
+                    dupes = [x]
+                    break
+                return dupes[0]
+            else:
+                return dupes[0]

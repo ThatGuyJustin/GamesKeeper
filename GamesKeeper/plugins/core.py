@@ -17,6 +17,7 @@ from disco.types.channel import ChannelType
 from disco.util.sanitize import S
 
 from GamesKeeper.db import init_db
+from GamesKeeper.models.guild import Guild
 
 PY_CODE_BLOCK = '```py\n{}\n```'
 
@@ -119,9 +120,16 @@ class CorePlugin(Plugin):
 
         if event.message.author.bot:
             return
-        
+
         # Grab the list of commands
-        commands = list(self.bot.get_commands_for_message(False, {}, TEMP_PREFIX, event.message))
+        new_setup = False
+        guild = None
+        try:
+           guild = Guild.using_id(event.guild.id)
+        except Guild.DoesNotExist:
+           guild = self.fresh_start(event, event.guild.id)
+           new_setup = True
+        commands = list(self.bot.get_commands_for_message(False, {}, guild.prefix, event.message))
 
         #Used for cmd cooldowns
         user_ignores_cooldowns = self.cooldown_check(event.message.author.id)
@@ -129,7 +137,7 @@ class CorePlugin(Plugin):
         #Sorry, nothing to see here :C
         if not len(commands):
             return
-        
+
         for command, match in commands:
 
             required_level = 0
@@ -150,7 +158,8 @@ class CorePlugin(Plugin):
             except:
                 self.log.exception('Command error:')
                 return event.reply('It seems that an error has occured! :(')
-        
+        if new_setup:
+            event.message.reply('Hey! I\'ve noticed that I\'m new to the server and have no config, please check out `{}settings` to edit and setup the bot.'.format(guild.prefix))
         return
 
     @Plugin.command('ping', level=-1)
@@ -207,3 +216,17 @@ class CorePlugin(Plugin):
             event.msg.reply('', attachments=[('result.txt', result)])
         else:
             event.msg.reply(PY_CODE_BLOCK.format(result))
+    
+    def fresh_start(self, event, guild_id):
+        new_guild = Guild.create(
+            guild_id = guild_id,
+            owner_id = event.guild.owner_id,
+            prefix = "+",
+            games_catergory = None,
+            spectator_roles = [],
+            enabled_games = 0,
+            referee_role = None,
+            role_allow_startgames = None,
+            booster_perks = False,
+        )
+        return new_guild
