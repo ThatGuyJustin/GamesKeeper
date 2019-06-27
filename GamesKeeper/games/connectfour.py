@@ -117,20 +117,58 @@ class Connect4():
             if updated_1 and updated_2:
                 self.turns = self.turns + 1
                 is_game_over = self.check_wins(event.user_id)
+                if is_game_over:
+                    isOver = True
+                    self.end_game()
+                self.clean_reactions()
                 self.selected = None
+                is_tie = self.check_tie()
+                if is_tie:
+                    self.winner = 'draw'
+                    return True
                 if spot['next_turn'] == 'blue':
                     self.current_turn = self.blue_player
                 else:
                     self.current_turn = self.red_player
-                # self.clean_reactions()
-                if is_game_over:
-                    isOver = True
-                    self.end_game()
             else:
                 self.end_game()
         
         return isOver
     
+    def check_tie(self):
+        is_tie = True
+        for row in range(len(self.game_board.spaces)):
+            for spot in range(len(self.game_board.spaces[row])):
+                spot_thing = self.game_board.spaces[row][spot]
+                if spot_thing.owner_id is not None:
+                    continue
+                else:
+                    is_tie = False
+                    break
+        return is_tie
+
+    def clean_reactions(self):
+        switcher = { 
+                'a': '\U0001f1e6',
+                'b': '\U0001f1e7',
+                'c': '\U0001f1e8',
+                'd': '\U0001f1e9',
+                'e': '\U0001f1ea',
+                'f': '\U0001f1eb',
+                'g': '\U0001f1ec'
+            }
+        emote = switcher.get(self.selected, None)
+        emotes = [
+            emote,
+            "✅"
+        ]
+        def rvm_reaction(emoji):
+            gevent.sleep(1)
+            self.game_board.game_message.delete_reaction(emoji, self.current_turn.id)
+        
+        for x in emotes:
+            gevent.spawn(rvm_reaction(x))
+
     def end_game(self):
         self.game_channel.send_message('Game ended, the winner is **{}**!'.format(self.guild.get_member(self.winner).user))
         self.game_over = True
@@ -153,6 +191,7 @@ class Connect4():
 
         if current_count >= 4:
             is_over = True
+            return is_over
         
         #Check every column for a win
         current_count = 0

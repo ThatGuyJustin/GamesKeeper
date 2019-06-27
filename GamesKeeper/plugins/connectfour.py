@@ -32,12 +32,23 @@ class ConnectFourPlugin(Plugin):
 
     @Plugin.listen('MessageReactionAdd')
     def on_message_reaction_add(self, event):
+
         if event.channel_id not in self.games:
             return
         game = self.games.get(event.channel_id, None)
         if game == None:
             return
+
+        def yeet_game_channel():
+            gevent.sleep(10)
+            game.game_channel.delete()
+
         is_game_over = game.handle_turn(event)
+        if is_game_over and game.winner == 'draw':
+            self.games.pop(event.channel_id, None)
+            game.start_event.channel.send_message('The game ended in a **draw** in the match of Connect 4 match between <@{}> and <@{}>.'.format(game.players[0], game.players[1]))
+            gevent.spawn(yeet_game_channel())
+            return
         if is_game_over:
             def get_other():
                 other = None
@@ -50,7 +61,8 @@ class ConnectFourPlugin(Plugin):
                 return other
             self.games.pop(event.channel_id, None)
             game.start_event.channel.send_message('The winner is <@{}> in the match of Connect 4 match against <@{}>!'.format(game.winner, get_other()))
-            game.game_channel.delete()
+            gevent.spawn(yeet_game_channel())
+            return
     
     @Plugin.command('play', '<user:user>', group='c4')
     def cmd_play(self, event, user):
