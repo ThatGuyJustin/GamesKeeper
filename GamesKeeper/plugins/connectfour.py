@@ -21,11 +21,11 @@ from GamesKeeper.models.guild import Guild
 from GamesKeeper.games.connectfour import Connect4
 
 class ConnectFourPlugin(Plugin):
-    global_plugin = True
 
     def load(self, ctx):
         super(ConnectFourPlugin, self).load(ctx)
         self.games = {}
+        self.game = 'c4'
     
     # @Plugin.command('test', level=-1, group='c4')
     # def cmd_testing(self, event):
@@ -64,9 +64,12 @@ class ConnectFourPlugin(Plugin):
             game.start_event.channel.send_message('The winner is <@{}> in the match of Connect 4 match against <@{}>!'.format(game.winner, get_other()))
             gevent.spawn(yeet_game_channel())
             return
-    
+
+    @Plugin.command('play', '<user:user>', group='connectfour')
+    @Plugin.command('play', '<user:user>', group='connect4')
     @Plugin.command('play', '<user:user>', group='c4')
     def cmd_play(self, event, user):
+
         if isinstance(user, int):
             user = self.state.users.get(user)
         

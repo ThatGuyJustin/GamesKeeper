@@ -28,66 +28,32 @@ TEMP_BOT_ADMINS = [
     298516367311765505
 ]
 
+def game_checker(string):
+    games = { 
+        'ttt': 'ttt',
+        'hm': 'hm',
+        'c4': 'c4',
+        'uno': 'uno',
+        '2048': '2048',
+        'twentyfourtyeight': '2048',
+        'connect 4': 'c4',
+        'connect four': 'c4',
+        'connectfour': 'c4',
+        'connect4': 'c4',
+        'hangman': 'hm',
+        'hang man': 'hm',
+        'tic-tac-toe': 'ttt',
+        'tic tac toe': 'ttt',
+    }
+    name = games.get(string.lower(), None)
+    return name
+
 class CorePlugin(Plugin):
     def load(self, ctx):
         init_db()
-        self.bot.add_plugin = self.our_add_plugin
+        # self.bot.add_plugin = self.our_add_plugin
         self.guilds = ctx.get('guilds', {})
         super(CorePlugin, self).load(ctx)
-
-    # Method by b1nzy#0852 
-    # For the bot Rowboat 
-    # (Only way to correctly handle permissions and a command hanlder within the library Disco)
-    def our_add_plugin(self, cls, *args, **kwargs):
-        if getattr(cls, 'global_plugin', False):
-            Bot.add_plugin(self.bot, cls, *args, **kwargs)
-            return
-
-        inst = cls(self.bot, None)
-        inst.register_trigger('command', 'pre', functools.partial(self.on_pre, inst))
-        inst.register_trigger('listener', 'pre', functools.partial(self.on_pre, inst))
-        Bot.add_plugin(self.bot, inst, *args, **kwargs)
-
-    # Method by b1nzy#0852 
-    # For the bot Rowboat 
-    # (Only way to correctly handle permissions and a command hanlder within the library Disco)
-    def on_pre(self, plugin, func, event, args, kwargs):
-        """
-        This function handles dynamically dispatching and modifying events based
-        on a specific guilds configuration. It is called before any handler of
-        either commands or listeners.
-        """
-        if hasattr(event, 'guild') and event.guild:
-            guild_id = event.guild.id
-        elif hasattr(event, 'guild_id') and event.guild_id:
-            guild_id = event.guild_id
-        else:
-            guild_id = None
-
-        if guild_id not in self.guilds:
-            if isinstance(event, CommandEvent):
-                if event.command.metadata.get('global_', False):
-                    return event
-            elif hasattr(func, 'subscriptions'):
-                if func.subscriptions[0].metadata.get('global_', False):
-                    return event
-
-            return
-
-        event.base_config = self.guilds[guild_id].get_config()
-        if not event.base_config:
-            return
-
-        plugin_name = plugin.name.lower().replace('plugin', '')
-        if not getattr(event.base_config.plugins, plugin_name, None):
-            return
-
-        self._attach_local_event_data(event, plugin_name, guild_id)
-
-        return event
-
-    def get_guild_config(self, guild_id):
-        pass
 
     def cooldown_check(self, user):
         return False
@@ -95,6 +61,10 @@ class CorePlugin(Plugin):
     #Basic command handler
     @Plugin.listen('MessageCreate')
     def on_message_create(self, event):
+
+        if event.message.channel.type == ChannelType.DM:
+            return
+
         event.bot_admin = event.message.author.id in TEMP_BOT_ADMINS
         event.user_level = 0
 
@@ -136,6 +106,10 @@ class CorePlugin(Plugin):
 
             required_level = 0
             cooldown = 0
+
+            if hasattr(command.plugin, 'game'):
+                if not guild.check_if_listed(game_checker(command.plugin.game), 'enabled'):
+                    return
 
             if command.level == -1 and not event.bot_admin:
                 return

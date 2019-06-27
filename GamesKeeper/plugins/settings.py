@@ -19,9 +19,27 @@ from disco.util.sanitize import S
 from GamesKeeper import NO_EMOJI_ID, YES_EMOJI_ID, NO_EMOJI, YES_EMOJI
 from GamesKeeper.models.guild import Guild
 
+def game_checker(string):
+    games = { 
+        'ttt': 'ttt',
+        'hm': 'hm',
+        'c4': 'c4',
+        'uno': 'uno',
+        '2048': '2048',
+        'twentyfourtyeight': '2048',
+        'connect 4': 'c4',
+        'connect four': 'c4',
+        'connectfour': 'c4',
+        'connect4': 'c4',
+        'hangman': 'hm',
+        'hang man': 'hm',
+        'tic-tac-toe': 'ttt',
+        'tic tac toe': 'ttt',
+    }
+    name = games.get(string.lower(), None)
+    return name
 
 class SettingsPlugin(Plugin):
-    global_plugin = True
 
     def load(self, ctx):
         super(SettingsPlugin, self).load(ctx)
@@ -101,6 +119,39 @@ class SettingsPlugin(Plugin):
             guild.save()
             return event.msg.reply('Updated the referee role to **{name}** (`{id}`)'.format(name=new_role.name, id=new_role.id))
     
+    @Plugin.command('enable', '<game:str...>', context={'mode': 'enable'}, group='games', level=CommandLevels.ADMIN)
+    @Plugin.command('disable', '<game:str...>', context={'mode': 'disable'}, group='games', level=CommandLevels.ADMIN)
+    def update_games(self, event, game, mode=None):
+        game_types = {
+            "uno": 1 << 0, #Uno
+            'c4': 1 << 1, #Connect4
+            'ttt': 1 << 2, #TicTacToe
+            'hm': 1 << 3, #Hangman
+            '2048': 1 << 4, #2048
+            'trivia': 1 << 5, #Trivia
+        }
+        game_name = game_checker(game)
+        if game_name == None:
+            return event.msg.reply('`Error`: Game not found.')
+        
+        guild = Guild.using_id(event.guild.id)
+        if mode == 'enable':
+            listed = guild.check_if_listed(game_name, 'enabled')
+            if listed:
+                return event.msg.reply('`Error`: Game is already enabled.')
+            else:
+                guild.enabled_games = guild.enabled_games + game_types[game_name]
+                guild.save()
+                return event.msg.reply('Game has been enabled!')
+        if mode == 'disable':
+            listed = guild.check_if_listed(game_name, 'disabled')
+            if listed:
+                return event.msg.reply('`Error`: Game is already disabled.')
+            else:
+                guild.enabled_games = guild.enabled_games - game_types[game_name]
+                guild.save()
+                return event.msg.reply('Game has been disabled!')
+
     @Plugin.command('addspec', '<role:str...>', aliases=['add spec', 'spec add', 'spectators add', 'add spectators', 'add spectator', 'spectator add'], level=CommandLevels.ADMIN, group='update', context={'mode': 'add'})
     @Plugin.command('listspec', aliases=['list spec', 'list add', 'spectators list', 'list spectators', 'list spectator', 'spectator list'], level=CommandLevels.ADMIN, group='update', context={'mode': 'add'})
     @Plugin.command('rvmspec', '<role:str...>', aliases=['rvm spec', 'spec rvm', 'spectators rvm', 'rvm spectators', 'rvm spectator', 'spectator rvm', 'remove spec', 'spec remove', 'spectators remove', 'remove spectators', 'remove spectator', 'spectator remove'], level=CommandLevels.ADMIN, group='update', context={'mode': 'rvm'})
@@ -135,6 +186,7 @@ class SettingsPlugin(Plugin):
                 return None
             return new_role
         elif isinstance(role, str):
+            correct_role = None
             dupes = []
             for x in event.guild.roles:
                 current = event.guild.roles[x]
@@ -166,11 +218,12 @@ class SettingsPlugin(Plugin):
                     finally:
                         msg.delete()
                     
-                    if mra_event.emoji.id != YES_EMOJI_ID:
-                        continue
-                    
-                    dupes = [x]
-                    break
-                return dupes[0]
+                    if mra_event.emoji.id == YES_EMOJI_ID:
+                        correct_role = x
+                        break
+
+                return correct_role
+
             else:
-                return dupes[0]
+
+                return correct_role

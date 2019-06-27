@@ -85,7 +85,26 @@ class Guild(BaseModel):
                 games.append(game_types[1 << i])
         
         return games
-
+    
+    def check_if_listed(self, game, check_type):
+        game_types = {
+            "uno": 1 << 0, #Uno
+            'c4': 1 << 1, #Connect4
+            'ttt': 1 << 2, #TicTacToe
+            'hm': 1 << 3, #Hangman
+            '2048': 1 << 4, #2048
+            'trivia': 1 << 5, #Trivia
+        }
+        if check_type == 'enabled':
+            if self.enabled_games & game_types[game]:
+                return True
+            else:
+                return False
+        if check_type == 'disabled':
+            if not self.enabled_games & game_types[game]:
+                return True
+            else:
+                return False
 
 # Prefix text
 # Games Category int(or big int, idk how b1nzy stored it)
