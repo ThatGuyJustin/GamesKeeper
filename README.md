@@ -1,7 +1,7 @@
 # GamesKeeper
 The GamesKeeper is a Discord bot written for Discord Hackweek 2019. Consist of some of your favorite games you know and love!
 
-##Team
+## Team
 * Justin#1337
 > Lead Developer (Connect 4/Base bot)
 * Nadie#0063
@@ -13,7 +13,7 @@ The GamesKeeper is a Discord bot written for Discord Hackweek 2019. Consist of s
 * joaoh1#3657
 > Artist (Maker of the Ultimate Assets Pack)
 
-##Testers
+## Testers
 
 * Andeh#0001
 * AppleLilly#2015
@@ -22,7 +22,7 @@ The GamesKeeper is a Discord bot written for Discord Hackweek 2019. Consist of s
 * Duck#6969
 * Eagle#3636
 
-##Games
+## Games
 
 * Uno
 * Connect 4
@@ -30,7 +30,7 @@ The GamesKeeper is a Discord bot written for Discord Hackweek 2019. Consist of s
 * 2048
 * Tic-Tac-Toe
 
-##Basic Commands
+## Basic Commands
 
 Default prefix is `+`
 
