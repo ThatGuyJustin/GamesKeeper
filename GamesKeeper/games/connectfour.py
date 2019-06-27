@@ -5,7 +5,7 @@ from disco.types.permissions import Permissions
 from GamesKeeper.models.guild import Guild
 from GamesKeeper import NO_EMOJI_ID, YES_EMOJI_ID, NO_EMOJI, YES_EMOJI
 import gevent
-DEFAULT_BOARD = """| {blank_space} | {blank_space} | {blank_space} | {blank_space} | {blank_space} | {blank_space} | {blank_space} |
+DEFAULT_BOARD = """** **\n| {blank_space} | {blank_space} | {blank_space} | {blank_space} | {blank_space} | {blank_space} | {blank_space} |
 ---------------------------------------------
 | {spaces[0][0]} | {spaces[0][1]} | {spaces[0][2]} | {spaces[0][3]} | {spaces[0][4]} | {spaces[0][5]} | {spaces[0][6]} |
 | {spaces[1][0]} | {spaces[1][1]} | {spaces[1][2]} | {spaces[1][3]} | {spaces[1][4]} | {spaces[1][5]} | {spaces[1][6]} |
@@ -206,14 +206,15 @@ class Connect4():
                 self.winner = player_id
                 break
 
+        if current_count >= 4:
+            is_over = True
+            return is_over
+
         #Checks all diagonals for a win.
         found = self.check_diag(self.game_board.last_play, player_id)
 
         if found:
             self.winner = player_id
-            is_over = True
-
-        if current_count >= 4:
             is_over = True
         
         return is_over
@@ -241,12 +242,12 @@ class Connect4():
     def diag_left(self, row, col, player_id):
         next_check_row = row
         next_check_col = col
-        count = 0
+        count_left = 0
         # check by going up first
         for x in range(10):
             check = self.game_board.spaces[next_check_row][next_check_col]
             if check.owner_id == player_id:
-                count = count + 1
+                count_left = count_left + 1
                 ur = False
                 uc = False
                 if 0 < next_check_row < 5:
@@ -272,7 +273,8 @@ class Connect4():
         for x in range(10):
             check = self.game_board.spaces[next_check_row][next_check_col]
             if check.owner_id == player_id:
-                count = count + 1
+                if next_check_col != col and next_check_row != row:
+                    count_left = count_left + 1
                 ur = False
                 uc = False
                 if 0 < next_check_row < 5:
@@ -288,7 +290,7 @@ class Connect4():
             else:
                 break
 
-        if count >= 4:
+        if count_left >= 4:
             return True
         else:
             return False
@@ -296,12 +298,12 @@ class Connect4():
     def diag_right(self, row, col, player_id):
         next_check_row = row
         next_check_col = col
-        count = 0
+        count_right = 0
         # check by going up first
         for x in range(10):
             check = self.game_board.spaces[next_check_row][next_check_col]
             if check.owner_id == player_id:
-                count = count + 1
+                count_right = count_right + 1
                 ur = False
                 uc = False
                 if 0 < next_check_row < 5:
@@ -327,7 +329,8 @@ class Connect4():
         for x in range(10):
             check = self.game_board.spaces[next_check_row][next_check_col]
             if check.owner_id == player_id:
-                count = count + 1
+                if next_check_col != col and next_check_row != row:
+                    count_right = count_right + 1
                 ur = False
                 uc = False
                 if 0 < next_check_row < 5:
@@ -343,7 +346,7 @@ class Connect4():
             else:
                 break
         
-        if count >= 4:
+        if count_right >= 4:
             return True
         else:
             return False
@@ -478,7 +481,7 @@ class Connect4Board():
             "\U0001f1ea",
             "\U0001f1eb",
             "\U0001f1ec",
-            "✅"
+            YES_EMOJI
         ]
         def add_reaction(emoji):
             gevent.sleep(1)
