@@ -16,6 +16,7 @@ from disco.types.user import GameType, Status, Game
 from disco.types.channel import ChannelType
 from disco.util.sanitize import S
 
+from GamesKeeper import NO_EMOJI_ID, YES_EMOJI_ID, NO_EMOJI, YES_EMOJI
 from GamesKeeper.models.guild import Guild
 
 
@@ -149,16 +150,15 @@ class SettingsPlugin(Plugin):
                     if x.color:
                         embed.color = x.color
                     msg = event.msg.reply('', embed=embed)
-                    msg.chain(False).\
-                        add_reaction('✅').\
-                        add_reaction('⛔')
+                    msg.add_reaction(NO_EMOJI)
+                    msg.add_reaction(YES_EMOJI)
 
                     try:
                         mra_event = self.wait_for_event(
                             'MessageReactionAdd',
                             message_id = msg.id,
                             conditional = lambda e: (
-                                e.emoji.name in ('✅', '⛔') and
+                                e.emoji.id in (NO_EMOJI_ID, YES_EMOJI_ID) and
                                 e.user_id == event.author.id
                             )).get(timeout=10)
                     except gevent.Timeout:
@@ -166,7 +166,7 @@ class SettingsPlugin(Plugin):
                     finally:
                         msg.delete()
                     
-                    if mra_event.emoji.name != '✅':
+                    if mra_event.emoji.id != YES_EMOJI_ID:
                         continue
                     
                     dupes = [x]

@@ -3,6 +3,7 @@ from random import randrange
 from disco.types.channel import ChannelType
 from disco.types.permissions import Permissions
 from GamesKeeper.models.guild import Guild
+from GamesKeeper import NO_EMOJI_ID, YES_EMOJI_ID, NO_EMOJI, YES_EMOJI
 import gevent
 DEFAULT_BOARD = """| {blank_space} | {blank_space} | {blank_space} | {blank_space} | {blank_space} | {blank_space} | {blank_space} |
 ---------------------------------------------
@@ -69,7 +70,7 @@ class Connect4():
                 ow.deny.add(Permissions.SEND_MESSAGES)
                 ow.deny.add(Permissions.READ_MESSAGES)
                 ow.deny.add(Permissions.MANAGE_MESSAGES)
-                ow.deny.add(1 << 6) #Add Reactions
+                ow.deny.add(Permissions.ADD_REACTIONS)
                 ow.save()
         
         if len(guild_obj.spectator_roles) > 0:
@@ -92,7 +93,7 @@ class Connect4():
             return True
 
         place = None
-        if event.emoji.name != '✅':
+        if event.emoji.id != YES_EMOJI_ID:
             switcher = { 
                 '\U0001f1e6': 'a',
                 '\U0001f1e7': 'b',
@@ -109,7 +110,7 @@ class Connect4():
             return False
 
         isOver = False
-        if event.emoji.name == '✅':
+        if event.emoji.id == YES_EMOJI_ID:
             player = self.current_turn
             spot = self.game_board.update_space(self.selected, player, self.turns)
             updated_1 = spot['updated']
@@ -160,7 +161,7 @@ class Connect4():
         emote = switcher.get(self.selected, None)
         emotes = [
             emote,
-            "✅"
+            YES_EMOJI
         ]
         def rvm_reaction(emoji):
             gevent.sleep(1)

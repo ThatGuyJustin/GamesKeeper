@@ -16,6 +16,7 @@ from disco.types.user import GameType, Status, Game
 from disco.types.channel import ChannelType
 from disco.util.sanitize import S
 
+from GamesKeeper import NO_EMOJI_ID, YES_EMOJI_ID, NO_EMOJI, YES_EMOJI
 from GamesKeeper.models.guild import Guild
 from GamesKeeper.games.connectfour import Connect4
 
@@ -70,24 +71,24 @@ class ConnectFourPlugin(Plugin):
             user = self.state.users.get(user)
         
         msg = event.channel.send_message("<@{user.id}>, do you accept the match against player **{author}**? You have 10 seconds to select.".format(user=user, author=event.author))
-        msg.chain(False).\
-            add_reaction('✅').\
-            add_reaction('⛔')
+        msg.add_reaction(YES_EMOJI)
+        msg.add_reaction(NO_EMOJI)
+        
         try:
             mra_event = self.wait_for_event(
                 'MessageReactionAdd',
                 message_id=msg.id,
                 conditional=lambda e: (
-                        e.emoji.name in ('✅', '⛔') and
+                        e.emoji.id in (YES_EMOJI_ID, NO_EMOJI_ID) and
                         e.user_id == user.id
                 )).get(timeout=10)
         except gevent.Timeout:
             msg.edit("**{user}** did not respond in time. Match canceled.".format(user=user))
-            msg.delete_reaction('✅', self.state.me)
-            msg.delete_reaction('⛔', self.state.me)
+            msg.delete_reaction(YES_EMOJI, self.state.me)
+            msg.delete_reaction(NO_EMOJI, self.state.me)
             return
         
-        if mra_event.emoji.name != '✅':
+        if mra_event.emoji.id != YES_EMOJI_ID:
             msg.edit("**{user}** Denied your request. Match canceled.".format(user=user))
             return
         
