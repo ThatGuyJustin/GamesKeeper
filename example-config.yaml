@@ -5,6 +5,8 @@ bot:
   plugins:
   - GamesKeeper.plugins.core
   - GamesKeeper.plugins.settings
+  - GamesKeeper.plugins.stats
+  - GamesKeeper.plugins.dev
 
 postgres:
   host: ''

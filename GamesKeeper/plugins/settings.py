@@ -100,6 +100,31 @@ class SettingsPlugin(Plugin):
             guild.save()
             return event.msg.reply('Updated the referee role to **{name}** (`{id}`)'.format(name=new_role.name, id=new_role.id))
     
+    @Plugin.command('addspec', '<role:str...>', aliases=['add spec', 'spec add', 'spectators add', 'add spectators', 'add spectator', 'spectator add'], level=CommandLevels.ADMIN, group='update', context={'mode': 'add'})
+    @Plugin.command('listspec', aliases=['list spec', 'list add', 'spectators list', 'list spectators', 'list spectator', 'spectator list'], level=CommandLevels.ADMIN, group='update', context={'mode': 'add'})
+    @Plugin.command('rvmspec', '<role:str...>', aliases=['rvm spec', 'spec rvm', 'spectators rvm', 'rvm spectators', 'rvm spectator', 'spectator rvm', 'remove spec', 'spec remove', 'spectators remove', 'remove spectators', 'remove spectator', 'spectator remove'], level=CommandLevels.ADMIN, group='update', context={'mode': 'rvm'})
+    def update_spectators(self, event, role, mode=None):
+        if role.isdigit():
+            role = int(role)
+        arg_role = self.get_role(event, role)
+        if not arg_role:
+            return event.msg.reply('`Error:` Role not found, please check ID/Name and try again.')
+        guild = Guild.using_id(event.guild.id)
+        if arg_role.id in guild.spectator_roles and mode == 'add':
+            return event.msg.reply('`Error:` That role is already labled as a spectator.')
+        if arg_role.id not in guild.spectator_roles and mode == 'rvm':
+            return event.msg.reply('`Error:` That role is not labled as a spectator.')
+        
+        if mode == 'add':
+            guild.spectator_roles.append(arg_role.id)
+            guild.save()
+            return event.msg.reply('Added role **{name}** (`{id}`) as a spectator.'.format(name=arg_role.name, id=arg_role.id))
+        if mode == 'rvm':
+            guild.spectator_roles.remove(arg_role.id)
+            guild.save()
+            return event.msg.reply('Removed role **{name}** (`{id}`) as a spectator.'.format(name=arg_role.name, id=arg_role.id))
+
+
     def get_role(self, event, role):
         if isinstance(role, int):
             new_role = None
