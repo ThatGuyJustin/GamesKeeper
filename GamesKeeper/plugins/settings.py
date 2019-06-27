@@ -150,8 +150,8 @@ class SettingsPlugin(Plugin):
                     if x.color:
                         embed.color = x.color
                     msg = event.msg.reply('', embed=embed)
-                    msg.add_reaction(NO_EMOJI)
                     msg.add_reaction(YES_EMOJI)
+                    msg.add_reaction(NO_EMOJI)
 
                     try:
                         mra_event = self.wait_for_event(
