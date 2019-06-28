@@ -14,6 +14,8 @@ class Guild(BaseModel):
     referee_role = BigIntegerField(null=True)
     role_allow_startgames = BigIntegerField(null=True)
     booster_perks = BooleanField(default=False)
+    #embed_logs = BooleanField(default=True)
+    #game_logs = BigIntegerField(null=True)
 
     class Meta:
         db_table = 'guilds'

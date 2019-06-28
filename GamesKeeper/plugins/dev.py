@@ -42,3 +42,7 @@ class DevPlugin(Plugin):
         ]
         embed.description = '\n'.join(description)
         event.msg.reply('', embed=embed)
+    
+    @Plugin.command('test', level=-1)
+    def cmd_test(self, event):
+        return event.msg.reply('August smells')

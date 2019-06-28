@@ -3,7 +3,7 @@ from random import randrange
 from disco.types.channel import ChannelType
 from disco.types.permissions import Permissions
 from GamesKeeper.models.guild import Guild
-from GamesKeeper import NO_EMOJI_ID, YES_EMOJI_ID, NO_EMOJI, YES_EMOJI
+from GamesKeeper import NO_EMOJI_ID, YES_EMOJI_ID, NO_EMOJI, YES_EMOJI, bot_config
 import gevent
 DEFAULT_BOARD = """** **\n| {blank_space} | {blank_space} | {blank_space} | {blank_space} | {blank_space} | {blank_space} | {blank_space} |
 ---------------------------------------------
@@ -16,8 +16,22 @@ DEFAULT_BOARD = """** **\n| {blank_space} | {blank_space} | {blank_space} | {bla
 ---------------------------------------------
 | :regional_indicator_a: | :regional_indicator_b: | :regional_indicator_c: | :regional_indicator_d: | :regional_indicator_e: | :regional_indicator_f: | :regional_indicator_g: |
 
-:red_circle: = `{red_player}` {red_status}
-:large_blue_circle: = `{blue_player}` {blue_status}
+{red} = `{red_player}` {red_status}
+{blue} = `{blue_player}` {blue_status}
+{endgame_stuff}
+"""
+
+DEFAULT_BOARD_new = """** **\n{blank_space}{blank_space}{blank_space}{blank_space}{blank_space}{blank_space}{blank_space}
+{spaces[0][0]}{spaces[0][1]}{spaces[0][2]}{spaces[0][3]}{spaces[0][4]}{spaces[0][5]}{spaces[0][6]}
+{spaces[1][0]}{spaces[1][1]}{spaces[1][2]}{spaces[1][3]}{spaces[1][4]}{spaces[1][5]}{spaces[1][6]}
+{spaces[2][0]}{spaces[2][1]}{spaces[2][2]}{spaces[2][3]}{spaces[2][4]}{spaces[2][5]}{spaces[2][6]}
+{spaces[3][0]}{spaces[3][1]}{spaces[3][2]}{spaces[3][3]}{spaces[3][4]}{spaces[3][5]}{spaces[3][6]}
+{spaces[4][0]}{spaces[4][1]}{spaces[4][2]}{spaces[4][3]}{spaces[4][4]}{spaces[4][5]}{spaces[4][6]}
+{spaces[5][0]}{spaces[5][1]}{spaces[5][2]}{spaces[5][3]}{spaces[5][4]}{spaces[5][5]}{spaces[5][6]}
+:regional_indicator_a::regional_indicator_b::regional_indicator_c::regional_indicator_d::regional_indicator_e::regional_indicator_f::regional_indicator_g:
+
+{red} = `{red_player}` {red_status}
+{blue} = `{blue_player}` {blue_status}
 {endgame_stuff}
 """
 
@@ -369,13 +383,13 @@ class Connect4Player():
 class Connect4Spot():
 
     colors = {
-        "blue": ":large_blue_circle:",
-        "red": ":red_circle:",
-        "blank": ":black_circle:"
+        "blue": '<:{}>'.format(bot_config.connect4_emotes.get("Blue", None)),
+        "red": '<:{}>'.format(bot_config.connect4_emotes.get("Red", None)),
+        "blank": '<:{}>'.format(bot_config.connect4_emotes.get("Blank", None))
     }
 
     def __init__(self):
-        self.color = ":black_circle:"
+        self.color = self.colors['blank']
         self.taken = False
         self.owner_id = None
         self.turn_placed = 0
@@ -527,12 +541,14 @@ class Connect4Board():
         }
     
     def __str__(self):
-        return DEFAULT_BOARD.format(
+        return DEFAULT_BOARD_new.format(
             spaces=self.spaces, 
-            blank_space=":black_circle:", 
+            blank_space=Connect4Spot.colors['blank'], 
             red_player=self.red_player,
             red_status=self.red_status,
             blue_player=self.blue_player, 
             blue_status=self.blue_status,
-            endgame_stuff=self.endgame_stuff
+            endgame_stuff=self.endgame_stuff,
+            blue='<:{}>'.format(bot_config.connect4_emotes.get("BlueNoBorder", None)),
+            red='<:{}>'.format(bot_config.connect4_emotes.get("RedNoBorder", None)),
         )

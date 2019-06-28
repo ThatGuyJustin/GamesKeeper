@@ -6,6 +6,8 @@ import functools
 import pprint
 import os
 import base64
+import psycopg2
+import time
 
 from datetime import datetime, timedelta
 
@@ -13,12 +15,12 @@ from disco.types.permissions import Permissions
 from disco.api.http import APIException
 from disco.bot import Bot, Plugin, CommandLevels
 from disco.bot.command import CommandEvent
-from disco.types.message import MessageEmbed
+from disco.types.message import MessageEmbed, MessageTable
 from disco.types.user import GameType, Status, Game
 from disco.types.channel import ChannelType
 from disco.util.sanitize import S
 
-from GamesKeeper.db import init_db
+from GamesKeeper.db import init_db, database
 from GamesKeeper.models.guild import Guild
 from GamesKeeper import bot_config, update_config
 
@@ -106,8 +108,10 @@ class CorePlugin(Plugin):
             return
 
         for command, match in commands:
-
-            required_level = 0
+            
+            needed_level = 0
+            if command.level:
+                needed_level = command.level
             cooldown = 0
 
             if hasattr(command.plugin, 'game'):
@@ -118,7 +122,7 @@ class CorePlugin(Plugin):
                 return
             
 
-            if not event.bot_admin and event.user_level < required_level:
+            if not event.bot_admin and event.user_level < needed_level:
                 continue
             
             try:
@@ -140,7 +144,7 @@ class CorePlugin(Plugin):
     
     def dis_cmd_help(self, command, command_event, event, guild_obj):
         embed = MessageEmbed()
-        embed.title = 'Command: {}{}'.format(command.group + ' ', command.name)
+        embed.title = 'Command: {}{}'.format('{} '.format(command.group) if hasattr(command, 'group') and command.group != None else '', command.name)
         helpstr = command.get_docstring()
         embed.description = helpstr 
         event.message.channel.send_message('', embed=embed)
@@ -170,14 +174,18 @@ class CorePlugin(Plugin):
             ]
             embed.description = '\n'.join(description)
             return event.msg.reply('', embed=embed)
+        elif command == 'settings' and (event.user_level != 100 or not event.bot_admin):
+            return event.msg.reply('`Error:` Command Not Found')
         else:
             commands = list(self.bot.commands)
             for cmd in commands:
                 if cmd.name != command:
                     continue
+                elif cmd.level == -1 and not event.bot_admin:
+                    continue
                 else:
                     embed = MessageEmbed()
-                    embed.title = 'Command: {}{}'.format(cmd.group + ' ', cmd.name)
+                    embed.title = 'Command: {}{}'.format('{} '.format(cmd.group) if hasattr(cmd, 'group') and cmd.group != None else '', cmd.name)
                     helpstr = cmd.get_docstring()
                     embed.description = helpstr
                     return event.msg.reply('', embed=embed)
@@ -185,10 +193,16 @@ class CorePlugin(Plugin):
 
     @Plugin.command('ping', level=-1)
     def cmd_ping(self, event):
+        """
+        Allow us to do what you wish you could do to your pings.
+        """
         return event.msg.reply('YEET!')
     
-    @Plugin.command('level')
+    @Plugin.command('level', level=-1)
     def cmd_level(self, event):
+        """
+        Dev command to get a user level.
+        """
         if event.user_level is 0:
             return event.msg.reply('>:C (0)')
         else:
@@ -261,6 +275,9 @@ class CorePlugin(Plugin):
     # For developer use, also made by b1nzy (Only eval command in Disco we know of).
     @Plugin.command('eval', level=-1)
     def command_eval(self, event):
+        """
+        This a Developer command which allows us to run code without having to restart the bot.
+        """
         ctx = {
             'bot': self.bot,
             'client': self.bot.client,
@@ -301,6 +318,38 @@ class CorePlugin(Plugin):
         else:
             event.msg.reply(PY_CODE_BLOCK.format(result))
     
+    @Plugin.command('sql', level=-1)
+    def command_sql(self, event):
+        """
+        This a Developer command which allows us to run Database commands without having to interact with the actual database directly.
+        """
+        conn = database.obj.get_conn()
+
+        try:
+            tbl = MessageTable(codeblock=False)
+
+            with conn.cursor() as cur:
+                start = time.time()
+                cur.execute(event.codeblock.format(e=event))
+                dur = time.time() - start
+                if not cur.description:
+                    return event.msg.reply('_took {}ms - no result_'.format(int(dur * 1000)))
+                tbl.set_header(*[desc[0] for desc in cur.description])
+
+                for row in cur.fetchall():
+                    tbl.add(*row)
+
+                result = tbl.compile()
+                if len(result) > 1900:
+                    return event.msg.reply(
+                        '_took {}ms_'.format(int(dur * 1000)),
+                        attachments=[('result.txt', result)])
+
+                event.msg.reply('```' + result + '```\n_took {}ms_\n'.format(int(dur * 1000)))
+        except psycopg2.Error as e:
+            event.msg.reply('```{}```'.format(e.pgerror))
+
+
     def fresh_start(self, event, guild_id):
         new_guild = Guild.create(
             guild_id = guild_id,
