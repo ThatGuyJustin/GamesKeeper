@@ -4,6 +4,8 @@ import re
 import requests
 import functools
 import pprint
+import os
+import base64
 
 from datetime import datetime, timedelta
 
@@ -18,6 +20,7 @@ from disco.util.sanitize import S
 
 from GamesKeeper.db import init_db
 from GamesKeeper.models.guild import Guild
+from GamesKeeper import bot_config, update_config
 
 PY_CODE_BLOCK = '```py\n{}\n```'
 
@@ -141,6 +144,69 @@ class CorePlugin(Plugin):
         else:
             return event.msg.reply(event.user_level)
 
+    #Massive function to check for first run, and if so, create a blank server for all the emojis.
+    @Plugin.listen('Ready')#, priority=Priority.BEFORE)
+    def on_ready(self, event):
+        
+        if bot_config.first_run != True:
+            return
+        
+        else:
+
+            def gen_invite(channel):
+                invite = channel.create_invite(max_age=0, max_uses=0, unique=True, reason='First run invite generation.')
+                invite_url = 'https://discord.gg/{code}'.format(code=invite.code)
+                return invite_url
+
+            server_one = self.client.api.guilds_create(name='GamesKeeper Emojis (1/2)')
+            server_two = self.client.api.guilds_create(name='GamesKeeper Emojis (2/2)')
+
+            server_one_channel = server_one.create_text_channel(name='GamesKeeper')
+            server_two_channel = server_two.create_text_channel(name='GamesKeeper')
+
+            server_one_invite = gen_invite(server_one_channel)
+            server_two_invite = gen_invite(server_two_channel)
+
+            uno_emojis = {}
+
+            server_one_path = './assets/server_one_emojis'
+            server_two_path = './assets/server_two_emojis'
+            for emoji in os.listdir(server_one_path):
+                with open('{}/{}'.format(server_one_path, emoji), 'rb') as emoji_image:
+                    encoded_string = base64.encodebytes(emoji_image.read())
+                    emoji_image_string = encoded_string.decode()
+                    name = emoji.replace('.png', '')
+                    emoji = self.client.api.guilds_emojis_create(server_one.id, 'Setting up Uno Cards!', name=name, image='data:image/png;base64,{}'.format(emoji_image_string))
+                    uno_emojis[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
+            
+            for emoji in os.listdir(server_two_path):
+                with open('{}/{}'.format(server_two_path, emoji), 'rb') as emoji_image:
+                    encoded_string = base64.encodebytes(emoji_image.read())
+                    emoji_image_string = encoded_string.decode()
+                    name = emoji.replace('.png', '')
+                    emoji = self.client.api.guilds_emojis_create(server_two.id, 'Setting up Uno Cards!', name=name, image='data:image/png;base64,{}'.format(emoji_image_string))
+                    uno_emojis[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
+            
+            with open("config.yaml", 'r') as config:
+                current_config = yaml.safe_load(config)
+            
+            emote_server_info = {
+                'invites': {
+                    'server_one': server_one_invite,
+                    'server_two': server_two_invite
+                },
+                'IDs': {
+                    'server_one': server_one.id,
+                    'server_two': server_two.id
+                }
+            }
+
+            current_config['emoji_servers'] = emote_server_info
+            current_config['uno_emojis'] = uno_emojis
+            current_config['first_run'] = False
+
+            with open("config.yaml", 'w') as f:
+                yaml.safe_dump(current_config, f)
 
     # For developer use, also made by b1nzy (Only eval command in Disco we know of).
     @Plugin.command('eval', level=-1)
