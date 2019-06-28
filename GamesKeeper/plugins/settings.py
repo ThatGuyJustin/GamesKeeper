@@ -127,8 +127,8 @@ class SettingsPlugin(Plugin):
             'c4': 1 << 1, #Connect4
             'ttt': 1 << 2, #TicTacToe
             'hm': 1 << 3, #Hangman
-            '2048': 1 << 4, #2048
-            'trivia': 1 << 5, #Trivia
+            # '2048': 1 << 4, #2048
+            # 'trivia': 1 << 5, #Trivia
         }
         game_name = game_checker(game)
         if game_name == None:
