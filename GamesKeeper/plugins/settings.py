@@ -73,10 +73,16 @@ class SettingsPlugin(Plugin):
         ))
         embed.add_field(name='Enabled Games', value='{}'.format(''.join(settings.enabled_games_emotes())), inline=True)
         embed.add_field(name='Disabled Games', value='{}'.format(''.join(settings.disabled_games_emotes())), inline=True)
+        embed.set_footer(text='Go get help with settings, do {}help settings'.format(settings.prefix), icon=self.state.me.get_avatar_url())
         return event.msg.reply('', embed=embed)
     
     @Plugin.command('prefix', '<prefix:str...>', aliases=['setprefix', 'changeprefix'], level=CommandLevels.ADMIN, group='update')
     def change_prefix(self, event, prefix):
+        """
+        This command is used to change the bot's prefix.
+        Usage: `update prefix *insert prefix here*`
+        Example: `update prefix !`
+        """
         guild = Guild.using_id(event.guild.id)
         if guild.prefix == prefix:
             return event.msg.reply('`Error:` New prefix matches the current prefix.')
@@ -87,6 +93,10 @@ class SettingsPlugin(Plugin):
     
     @Plugin.command('gamescategory', '<channel:channel>', aliases=['setgamescategory', 'changegamescategory', 'setcategory', 'changecategory', 'gc'], level=CommandLevels.ADMIN, group='update')
     def change_catergory(self, event, channel):
+        """
+        This command is used to change the games cetegory.
+        Usage: `update gc [ChannelID]`
+        """
         guild = Guild.using_id(event.guild.id)
         if isinstance(channel, int):
             if guild.games_category == channel:
@@ -106,6 +116,10 @@ class SettingsPlugin(Plugin):
     
     @Plugin.command('setreferee', '<role:str...>', aliases=['setref', 'ref', 'referee'], level=CommandLevels.ADMIN, group='update')
     def update_referee(self, event, role):
+        """
+        This command is used to change the referee role.
+        Usage: `update ref [Role Name or Role ID]`
+        """
         if role.isdigit():
             role = int(role)
         new_role = self.get_role(event, role)
@@ -122,6 +136,11 @@ class SettingsPlugin(Plugin):
     @Plugin.command('enable', '<game:str...>', context={'mode': 'enable'}, group='games', level=CommandLevels.ADMIN)
     @Plugin.command('disable', '<game:str...>', context={'mode': 'disable'}, group='games', level=CommandLevels.ADMIN)
     def update_games(self, event, game, mode=None):
+        """
+        This command is used to enable/disable games.
+        Usage: `games enable/disable [Game]`
+        Current Games: **Connect 4**, **Uno**, **TicTacToe**, **HangMan**
+        """
         game_types = {
             "uno": 1 << 0, #Uno
             'c4': 1 << 1, #Connect4
@@ -156,6 +175,10 @@ class SettingsPlugin(Plugin):
     @Plugin.command('listspec', aliases=['list spec', 'list add', 'spectators list', 'list spectators', 'list spectator', 'spectator list'], level=CommandLevels.ADMIN, group='update', context={'mode': 'add'})
     @Plugin.command('rvmspec', '<role:str...>', aliases=['rvm spec', 'spec rvm', 'spectators rvm', 'rvm spectators', 'rvm spectator', 'spectator rvm', 'remove spec', 'spec remove', 'spectators remove', 'remove spectators', 'remove spectator', 'spectator remove'], level=CommandLevels.ADMIN, group='update', context={'mode': 'rvm'})
     def update_spectators(self, event, role, mode=None):
+        """
+        This command is used to update the spectator roles.
+        Usage: `change addspec/rvmspec [Role Name or Role ID]`
+        """
         if role.isdigit():
             role = int(role)
         arg_role = self.get_role(event, role)

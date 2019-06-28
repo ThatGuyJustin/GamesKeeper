@@ -69,6 +69,10 @@ class ConnectFourPlugin(Plugin):
     @Plugin.command('play', '<user:user>', group='connect4')
     @Plugin.command('play', '<user:user>', group='c4')
     def cmd_play(self, event, user):
+        """
+        This command allows you to start a game of connect 4!
+        Usage: `c4 play [@User#1234 or UserID]`
+        """
 
         if isinstance(user, int):
             user = self.state.users.get(user)

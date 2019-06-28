@@ -125,6 +125,11 @@ class CorePlugin(Plugin):
                 command_event = CommandEvent(command, event.message, match)
                 command_event.bot_admin = event.bot_admin
                 command_event.user_level = event.user_level
+                command_event.db_guild = guild
+                if command.args:
+                    if len(command_event.args) < command.args.required_length:
+                        self.dis_cmd_help(command, command_event, event, guild)
+                        return
                 command.plugin.execute(command_event)
             except:
                 self.log.exception('Command error:')
@@ -132,6 +137,51 @@ class CorePlugin(Plugin):
         if new_setup:
             event.message.reply('Hey! I\'ve noticed that I\'m new to the server and have no config, please check out `{}settings` to edit and setup the bot.'.format(guild.prefix))
         return
+    
+    def dis_cmd_help(self, command, command_event, event, guild_obj):
+        embed = MessageEmbed()
+        embed.title = 'Command: {}{}'.format(command.group + ' ', command.name)
+        helpstr = command.get_docstring()
+        embed.description = helpstr 
+        event.message.channel.send_message('', embed=embed)
+
+    @Plugin.command('help', '[command:str...]')
+    def cmd_help(self, event, command=None):
+        """
+        This is the help command! Use this command to help you get info some certain commands.
+        Usage: `help [Command Name]`
+        To get general info, just type `help`
+        """
+        if command is None:
+            embed = MessageEmbed()
+            embed.title = 'GamesKeeper Help'
+            embed.description = '**To get help with a certain command please use `{prefix}help Command`**\n** **\nFor help with settings please type `{prefix}help settings`'.format(prefix=event.db_guild.prefix)
+            return event.msg.reply('', embed=embed)
+        elif command == 'settings' and (event.user_level == 100 or event.bot_admin):
+            embed = MessageEmbed()
+            embed.title = 'GamesKeeper Settings Help'
+            description = [
+                'To change most settings, the command group is `update`',
+                '\♦ To change **Prefix**, use `{}update prefix`'.format(event.db_guild.prefix),
+                '\♦ To change **Games Category**, use `{}update gc`'.format(event.db_guild.prefix),
+                '\♦ To change the **Referee** role, use `{}update ref`'.format(event.db_guild.prefix),
+                '\♦ To update **Spectator** roles, use `{}update addspec/rvmspec`'.format(event.db_guild.prefix),
+                '\♦ To **Enable/Disable Games**, use `{}games enable/disable`'.format(event.db_guild.prefix),
+            ]
+            embed.description = '\n'.join(description)
+            return event.msg.reply('', embed=embed)
+        else:
+            commands = list(self.bot.commands)
+            for cmd in commands:
+                if cmd.name != command:
+                    continue
+                else:
+                    embed = MessageEmbed()
+                    embed.title = 'Command: {}{}'.format(cmd.group + ' ', cmd.name)
+                    helpstr = cmd.get_docstring()
+                    embed.description = helpstr
+                    return event.msg.reply('', embed=embed)
+            return event.msg.reply('`Error:` Command Not Found')
 
     @Plugin.command('ping', level=-1)
     def cmd_ping(self, event):
