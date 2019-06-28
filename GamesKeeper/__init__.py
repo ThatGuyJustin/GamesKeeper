@@ -12,7 +12,7 @@ def update_config():
         new_base_config = yaml.safe_load(config_yml_new)
         bot_config = namedtuple("config", new_base_config.keys())(*new_base_config.values())
 
-YES_EMOJI = ':yes:593829710941913098' 
-NO_EMOJI = ':no:593829710786723850'
-YES_EMOJI_ID = 593829710941913098
-NO_EMOJI_ID = 593829710786723850
+YES_EMOJI = ':yes:594231233228177408'
+NO_EMOJI = ':no:594231233022525468'
+YES_EMOJI_ID = 594231233228177408
+NO_EMOJI_ID = 594231233022525468
