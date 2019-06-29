@@ -1,5 +1,8 @@
 # GamesKeeper
-The GamesKeeper is a Discord bot that was written for Discord Hackweek 2019. Consisting of some of your favorite games you know and love!
+![Banner](assets/banner.png)
+
+# About
+The GamesKeeper is a Discord bot that was written for Discord Hack Week 2019. Consisting of some of your favorite games you know and love!
 
 ## Add the bot to your server.
 To add the bot to your server, you can use one of two links:
@@ -7,23 +10,23 @@ To add the bot to your server, you can use one of two links:
 * [Without Any Permissions](https://discordapp.com/oauth2/authorize?client_id=594004184018190337&scope=bot&permissions=0)
 
 ### Permissions Breakdown
-- Manage channels is needed to create game channels
-- embed/attach files for help command/any misc files that need to be sent.
-- Add reactions which some games depend on
-- Manage messages to remove command messages
+- Manage channels is needed to create game channels.
+- Embed/attach files for help command/any misc files that need to be sent.
+- Add reactions which some games depend on.
+- Manage messages to remove command messages.
 - External Emojis is needed because almost all emojis used are custom.
 
 ## Team
 * Justin#1337
-> Lead Developer (Connect 4/Base bot)
+> Lead Developer (Connect 4/Base Bot)
 * Nadie#0063
 > Developer (Hangman/Database)
 * Rina#5040
-> Developer (2048)
+> Developer (Tic-Tac-Toe)
 * Zeboto#0001
 > Developer (Uno)
 * joaoh1#3657
-> Artist (Maker of the Ultimate Assets Pack)
+> Designer (Maker of The Ultimate Assets Pack)
 
 ## Testers
 
