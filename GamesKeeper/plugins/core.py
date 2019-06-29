@@ -22,6 +22,7 @@ from disco.util.sanitize import S
 
 from GamesKeeper.db import init_db, database
 from GamesKeeper.models.guild import Guild
+from GamesKeeper.models.games import Games, Users
 from GamesKeeper import bot_config, update_config
 
 PY_CODE_BLOCK = '```py\n{}\n```'
@@ -68,6 +69,16 @@ class CorePlugin(Plugin):
     def on_message_create(self, event):
 
         if event.message.channel.type == ChannelType.DM:
+            return
+        
+        if event.message.author.bot:
+            return
+
+        user_obj = Users.get_or_create(id=event.message.author.id)
+        
+        perms = event.message.channel.get_permissions(self.state.me)
+
+        if not perms.can(Permissions.SEND_MESSAGES):
             return
 
         event.bot_admin = event.message.author.id in TEMP_BOT_ADMINS
@@ -129,6 +140,7 @@ class CorePlugin(Plugin):
                 command_event = CommandEvent(command, event.message, match)
                 command_event.bot_admin = event.bot_admin
                 command_event.user_level = event.user_level
+                command_event.db_user = user_obj
                 command_event.db_guild = guild
                 if command.args:
                     if len(command_event.args) < command.args.required_length:
@@ -231,7 +243,11 @@ class CorePlugin(Plugin):
             server_one_invite = gen_invite(server_one_channel)
             server_two_invite = gen_invite(server_two_channel)
 
+            c4_names = ['Blank', 'Blue', 'BlueNoBorder', 'Red', 'RedNoBorder']
+            hangman_emotes = {}
+            connect4_emotes = {}
             uno_emojis = {}
+            ttt_emojis = {}
 
             server_one_path = './assets/server_one_emojis'
             server_two_path = './assets/server_two_emojis'
@@ -249,8 +265,16 @@ class CorePlugin(Plugin):
                     emoji_image_string = encoded_string.decode()
                     name = emoji.replace('.png', '')
                     emoji = self.client.api.guilds_emojis_create(server_two.id, 'Setting up Uno Cards!', name=name, image='data:image/png;base64,{}'.format(emoji_image_string))
-                    uno_emojis[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
-            
+
+                    if name.startswith('Hangman'):
+                        hangman_emotes[name.replace('Hangman', '', -1)] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
+                    elif name.startswith('TicTacToe'):
+                        ttt_emojis[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
+                    elif name in c4_names:
+                        connect4_emotes[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
+                    else:
+                        uno_emojis[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
+
             with open("config.yaml", 'r') as config:
                 current_config = yaml.safe_load(config)
             
@@ -267,6 +291,10 @@ class CorePlugin(Plugin):
 
             current_config['emoji_servers'] = emote_server_info
             current_config['uno_emojis'] = uno_emojis
+            current_config['connect4_emotes'] = connect4_emotes
+            current_config['hangman_emotes'] = hangman_emotes
+            current_config['ttt_emotes'] = ttt_emojis
+            # current_config['other_emotes'] = other_emotes
             current_config['first_run'] = False
 
             with open("config.yaml", 'w') as f:
