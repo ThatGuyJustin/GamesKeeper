@@ -6,6 +6,7 @@ bot:
   - GamesKeeper.plugins.stats
   - GamesKeeper.plugins.dev
   - GamesKeeper.plugins.connectfour
+  - GamesKeeper.plugins.uno
 
 first_run: true
 
