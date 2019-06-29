@@ -300,6 +300,43 @@ class CorePlugin(Plugin):
             with open("config.yaml", 'w') as f:
                 yaml.safe_dump(current_config, f)
 
+        if not bot_config.first_run and not hasattr(bot_config, 'uno_emojis'):
+            
+            c4_names = ['Blank', 'Blue', 'BlueNoBorder', 'Red', 'RedNoBorder']
+
+            hangman_emotes = {}
+            c4_emotes = {}
+            uno_emotes = {}
+            ttt_emotes = {}
+
+            server_one = self.state.guilds.get(bot_config.emoji_servers['IDs']['server_one'])
+            server_two = self.state.guilds.get(bot_config.emoji_servers['IDs']['server_two'])
+
+            for emoji in server_one.emojis.values():
+                uno_emotes[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
+            
+            for emoji in server_two.emojis.values():
+                name = emoji.name
+                if name.startswith('Hangman'):
+                    hangman_emotes[name.replace('Hangman', '', -1)] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
+                elif name.startswith('TicTacToe'):
+                    ttt_emotes[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
+                elif name in c4_names:
+                    c4_emotes[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
+                else:
+                    uno_emotes[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
+            
+            with open("config.yaml", 'r') as config:
+                current_config = yaml.safe_load(config)
+            
+            current_config['uno_emojis'] = uno_emotes
+            current_config['connect4_emotes'] = c4_emotes
+            current_config['hangman_emotes'] = hangman_emotes
+            current_config['ttt_emotes'] = ttt_emotes
+
+            with open("config.yaml", 'w') as f:
+                yaml.safe_dump(current_config, f)
+
     # For developer use, also made by b1nzy (Only eval command in Disco we know of).
     @Plugin.command('eval', level=-1)
     def command_eval(self, event):
