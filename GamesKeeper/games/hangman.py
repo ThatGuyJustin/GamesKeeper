@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from GamesKeeper.models.guild import Guild
+from GamesKeeper import bot_config
 
 from disco.types.permissions import Permissions
 from disco.types.channel import ChannelType
@@ -7,6 +8,7 @@ from disco.types.message import MessageEmbed
 
 import random
 import requests
+import gevent
 
 class hangman():
     def __init__(self, event):
@@ -102,11 +104,11 @@ class hangman():
         commpletedarray = list()
         for letter in currentarray:
             if letter is "_":
-                commpletedarray.append(":HangmanBlank:")
+                commpletedarray.append("<:{}>".format(bot_config.hangman_emotes.get("Blank", None)))
             elif letter is " ":
-                commpletedarray.append("-")
+                commpletedarray.append(" ")
             else:
-                commpletedarray.append(":Hangman{}:".format(letter.upper()))
+                commpletedarray.append("<:{}>".format(bot_config.hangman_emotes.get(letter.upper(), None)))
         return commpletedarray
 
     def on_guess(self, guess_event, letter):
@@ -158,6 +160,4 @@ class hangman():
             return
 
     def do_exit(self):
-        #TODO: do something lol
-
         None
