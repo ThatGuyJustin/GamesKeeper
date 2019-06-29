@@ -9,6 +9,10 @@ bot:
 
 first_run: true
 
+#Leave until fix is found for startup.
+connect4_emotes:
+  broken: true
+
 postgres:
   host: 'localhost'
   port: '5432'
