@@ -74,7 +74,7 @@ class CorePlugin(Plugin):
         if event.message.author.bot:
             return
 
-        user_obj = Users.get_or_create(id=event.message.author.id)
+        user_obj, created = Users.get_or_create(id=event.message.author.id)
         
         perms = event.message.channel.get_permissions(self.state.me)
 
@@ -240,6 +240,9 @@ class CorePlugin(Plugin):
             server_one_channel = server_one.create_text_channel(name='GamesKeeper')
             server_two_channel = server_two.create_text_channel(name='GamesKeeper')
 
+            server_one_admin = server_one.create_role(name='Admin', permissions=9)
+            server_two_admin = server_two.create_role(name='Admin', permissions=9)
+
             server_one_invite = gen_invite(server_one_channel)
             server_two_invite = gen_invite(server_two_channel)
 
@@ -286,6 +289,10 @@ class CorePlugin(Plugin):
                 'IDs': {
                     'server_one': server_one.id,
                     'server_two': server_two.id
+                },
+                'admin_roles': {
+                    'server_one': server_one_admin.id,
+                    'server_two': server_two_admin.id
                 }
             }
 

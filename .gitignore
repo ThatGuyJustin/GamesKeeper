@@ -4,3 +4,5 @@ src/
 GamesKeeper/plugins/__init__.py
 *.pyc
 __pycache__
+frontend
+frontend-base

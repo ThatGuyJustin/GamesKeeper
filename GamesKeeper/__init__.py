@@ -16,3 +16,10 @@ YES_EMOJI = ':yes:594231233228177408'
 NO_EMOJI = ':no:594231233022525468'
 YES_EMOJI_ID = 594231233228177408
 NO_EMOJI_ID = 594231233022525468
+
+def get_client():
+    from disco.client import ClientConfig, Client
+
+    config = ClientConfig()
+    config.token = bot_config.token
+    return Client(config)

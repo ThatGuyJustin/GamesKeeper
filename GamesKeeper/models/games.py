@@ -72,6 +72,9 @@ class Users(BaseModel):
     cards_drawn = IntegerField(default=0)
     cards_placed = IntegerField(default=0)
     uno_rules = IntegerField(default=0)
+    access_token = TextField(default=None)
+    refresh_token = TextField(default=None)
+    admin = BooleanField(default=False)
 
     class Meta:
         db_table = 'users'

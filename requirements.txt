@@ -1,4 +1,7 @@
 # disco-py==0.0.12
+# holster==latest
+click==7.0
+-e git+https://github.com/b1naryth1ef/holster.git#egg=holster
 -e git+https://github.com/b1naryth1ef/disco.git@staging/v1.0.0#egg=disco-py
 Flask==1.0.3
 -e git+https://github.com/elderlabs/peewee.git@master#egg=peewee
@@ -11,3 +14,4 @@ oauth2client==4.1.3
 oauthlib==3.0.1
 psycopg2==2.8.3
 psutil==5.6.3
+Werkzeug==0.14.1

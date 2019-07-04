@@ -146,15 +146,15 @@ class StatsPlugin(Plugin):
                 wl_ratio=wl,
                 games_lost=gl,
             )
-            embed.add_field(name='<:hangman:593494133738438656>', value=HM_STR.format(HM_STATS=HANGMAN_STATS), inline=True)
-            embed.add_field(name='<:uno:593494134870900736>', value=UNO_STR.format(UNO_STATS=UNO_STATS), inline=True)
-            embed.add_field(name='<:connectfour:593494135378542592>', value=C4_STR.format(C4_STATS=C4_STATS), inline=True)
-            embed.add_field(name='<:tictactoe:593494134535225344>', value=TTT_STR.format(TTT_STATS=TTT_STATS), inline=True)
+            embed.add_field(name='<:{}>'.format('hangman:594231153914019840'), value=HM_STR.format(HM_STATS=HANGMAN_STATS), inline=True)
+            embed.add_field(name='<:{}>'.format('uno:594231154098438153'), value=UNO_STR.format(UNO_STATS=UNO_STATS), inline=True)
+            embed.add_field(name='<:{}>'.format('connectfour:594231155172179985'), value=C4_STR.format(C4_STATS=C4_STATS), inline=True)
+            embed.add_field(name='<:{}>'.format('tictactoe:594231153830133761'), value=TTT_STR.format(TTT_STATS=TTT_STATS), inline=True)
             event.msg.reply('', embed=embed)
 
         if user == None and game == None:
             user = event.author
-            compile_stats(user)
+            return compile_stats(user)
         
         if user != None:
             if isinstance(user, int):
@@ -163,7 +163,7 @@ class StatsPlugin(Plugin):
                 except:
                     return event.msg.reply('`Error:` User not found.')
 
-                compile_stats(user)
+                return compile_stats(user)
             else:
-                compile_stats(user)
+                return compile_stats(user)
             

@@ -74,6 +74,7 @@ class SettingsPlugin(Plugin):
         embed.add_field(name='Enabled Games', value='{}'.format(''.join(settings.enabled_games_emotes())), inline=True)
         embed.add_field(name='Disabled Games', value='{}'.format(''.join(settings.disabled_games_emotes())), inline=True)
         embed.set_footer(text='Go get help with settings, do {}help settings'.format(settings.prefix), icon=self.state.me.get_avatar_url())
+        embed.set_thumbnail(url=event.guild.get_icon_url('png'))
         return event.msg.reply('', embed=embed)
     
     @Plugin.command('prefix', '<prefix:str...>', aliases=['setprefix', 'changeprefix'], level=CommandLevels.ADMIN, group='update')

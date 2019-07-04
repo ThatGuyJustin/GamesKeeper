@@ -95,7 +95,7 @@ class hangman():
             self.game_channel.set_topic("Correct guess!")
 
     def get_hangman_image(self, failed_attempts):
-        baseurl = "https://assists.aperturebot.science/gameskeeper/hangman"
+        baseurl = "https://assists.gameskeeper.party/hangman"
         if failed_attempts > 7:
             failed_attempts = 7
         return "{}/{}.png".format(baseurl, failed_attempts)
