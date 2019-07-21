@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import yaml
-import re
-import requests
-import functools
+# import re
+# import requests
+# import functools
 import pprint
 import os
 import base64
@@ -11,11 +11,11 @@ import time
 import contextlib
 from ast import literal_eval
 
-from datetime import datetime, timedelta
+from datetime import datetime  # , timedelta
 
 from disco.types.permissions import Permissions
 from disco.api.http import APIException
-from disco.bot import Bot, Plugin, CommandLevels
+from disco.bot import Plugin  # , Bot, CommandLevels
 from disco.bot.command import CommandEvent
 from disco.types.message import MessageEmbed, MessageTable
 from disco.types.user import GameType, Status, Game
@@ -25,7 +25,7 @@ from disco.util.sanitize import S
 from GamesKeeper.db import init_db, database
 from GamesKeeper.models.guild import Guild
 from GamesKeeper.models.games import Games, Users
-from GamesKeeper import bot_config, update_config
+from GamesKeeper import bot_config  # , update_config
 
 PY_CODE_BLOCK = '```py\n{}\n```'
 
@@ -36,8 +36,9 @@ TEMP_BOT_ADMINS = [
     298516367311765505
 ]
 
+
 def game_checker(string):
-    games = { 
+    games = {
         'ttt': 'ttt',
         'hm': 'hm',
         'c4': 'c4',
@@ -56,6 +57,7 @@ def game_checker(string):
     name = games.get(string.lower(), None)
     return name
 
+
 class CorePlugin(Plugin):
     def load(self, ctx):
         init_db()
@@ -66,18 +68,18 @@ class CorePlugin(Plugin):
     def cooldown_check(self, user):
         return False
 
-    #Basic command handler
+    # Basic command handler
     @Plugin.listen('MessageCreate')
     def on_message_create(self, event):
 
         if event.message.channel.type == ChannelType.DM:
             return
-        
+
         if event.message.author.bot:
             return
 
         user_obj, created = Users.get_or_create(id=event.message.author.id)
-        
+
         perms = event.message.channel.get_permissions(self.state.me)
 
         if not perms.can(Permissions.SEND_MESSAGES):
@@ -109,22 +111,26 @@ class CorePlugin(Plugin):
 
         if event.message.author.bot:
             return
-        
+
         if not event.message.content.startswith(guild.prefix) and event.message.mentions and self.state.me.id in event.message.mentions:
             content = event.message.without_mentions
             content = content.replace(' ', '', -1)
             if 'prefix' in content.lower():
-                return event.channel.send_message('Prefix: `{}`'.format(guild.prefix))
+                return event.channel.send_message('Prefix: `{}`'.format(
+                    guild.prefix
+                ))
             else:
                 pass
 
         # Grab the list of commands
-        commands = list(self.bot.get_commands_for_message(False, {}, guild.prefix, event.message))
+        commands = list(self.bot.get_commands_for_message(
+            False, {}, guild.prefix, event.message
+        ))
 
-        #Used for cmd cooldowns
+        # Used for cmd cooldowns
         user_ignores_cooldowns = self.cooldown_check(event.message.author.id)
 
-        #Sorry, nothing to see here :C
+        # Sorry, nothing to see here :C
         if not len(commands):
             return
 
@@ -132,10 +138,11 @@ class CorePlugin(Plugin):
 
             if command.name == 'settings' and len(commands) > 1:
                 continue
-            
+
             needed_level = 0
             if command.level:
                 needed_level = command.level
+
             cooldown = 0
 
             if hasattr(command.plugin, 'game'):
@@ -144,11 +151,10 @@ class CorePlugin(Plugin):
 
             if command.level == -1 and not event.bot_admin:
                 return
-            
 
             if not event.bot_admin and event.user_level < needed_level:
                 continue
-            
+
             try:
                 command_event = CommandEvent(command, event.message, match)
                 command_event.bot_admin = event.bot_admin
@@ -166,12 +172,14 @@ class CorePlugin(Plugin):
         if new_setup:
             event.message.reply('Hey! I\'ve noticed that I\'m new to the server and have no config, please check out `{}settings` to edit and setup the bot.'.format(guild.prefix))
         return
-    
+
     def dis_cmd_help(self, command, command_event, event, guild_obj):
         embed = MessageEmbed()
-        embed.title = 'Command: {}{}'.format('{} '.format(command.group) if hasattr(command, 'group') and command.group != None else '', command.name)
+        embed.title = 'Command: {}{}'.format(
+            '{} '.format(command.group) if hasattr(command, 'group') and command.group != None else '', command.name
+        )
         helpstr = command.get_docstring()
-        embed.description = helpstr 
+        embed.description = helpstr
         event.message.channel.send_message('', embed=embed)
 
     @Plugin.command('help', '[command:str...]')
@@ -210,7 +218,10 @@ class CorePlugin(Plugin):
                     continue
                 else:
                     embed = MessageEmbed()
-                    embed.title = 'Command: {}{}'.format('{} '.format(cmd.group) if hasattr(cmd, 'group') and cmd.group != None else '', cmd.name)
+                    embed.title = 'Command: {}{}'.format(
+                        '{} '.format(cmd.group) if hasattr(cmd, 'group') and
+                        cmd.group is not None else '', cmd.name
+                    )
                     helpstr = cmd.get_docstring()
                     embed.description = helpstr
                     return event.msg.reply('', embed=embed)
@@ -246,20 +257,31 @@ class CorePlugin(Plugin):
 
     @Plugin.listen('Resumed')
     def on_resumed(self, event):
-        self.client.update_presence(Status.ONLINE, Game(name='on {} Servers.'.format(len(self.state.guilds)), type=GameType.DEFAULT))
+        self.client.update_presence(Status.ONLINE, Game(
+            name='on {} Servers.'.format(len(self.state.guilds)),
+            type=GameType.DEFAULT
+        ))
         trace_event = literal_eval(event.trace[0])
 
         with self.send_control_message() as embed:
             embed.title = 'Resumed'
             embed.color = 0xffb347
-            embed.add_field(name='Gateway Server', value=trace_event[0], inline=False)
+            embed.add_field(name='Gateway Server', value=trace_event[0],
+                            inline=False)
             embed.add_field(name='Session Server', value=trace_event[1]['calls'][0], inline=False)
-            embed.add_field(name='Replayed Events', value=str(self.client.gw.replayed_events))
+            embed.add_field(name='Replayed Events',
+                            value=str(self.client.gw.replayed_events))
 
-    #Massive function to check for first run, and if so, create a blank server for all the emojis.
-    @Plugin.listen('Ready')#, priority=Priority.BEFORE)
+    # Massive function to check for first run, and if so, create a blank
+    # server for all the emojis.
+    @Plugin.listen('Ready')  # , priority=Priority.BEFORE)
     def on_ready(self, event):
-        self.client.update_presence(Status.ONLINE, Game(name='on {} Servers'.format(len(event.guilds)), type=GameType.DEFAULT))
+        self.client.update_presence(
+            Status.ONLINE, Game(name='on {} Servers'.format(
+                len(event.guilds)),
+                type=GameType.DEFAULT
+            )
+        )
         trace_event = literal_eval(event.trace[0])
         reconnects = self.client.gw.reconnects
 
@@ -272,27 +294,42 @@ class CorePlugin(Plugin):
                 embed.title = 'Connected'
                 embed.color = 0x77dd77
 
-            embed.add_field(name='Gateway Server', value=trace_event[0], inline=False)
-            embed.add_field(name='Session Server', value=trace_event[1]['calls'][0], inline=False)
+            embed.add_field(name='Gateway Server', value=trace_event[0],
+                            inline=False)
+            embed.add_field(name='Session Server',
+                            value=trace_event[1]['calls'][0], inline=False)
 
-        if bot_config.first_run != True:
+        if bot_config.first_run is not True:
             return
-        
+
         else:
 
             def gen_invite(channel):
-                invite = channel.create_invite(max_age=0, max_uses=0, unique=True, reason='First run invite generation.')
-                invite_url = 'https://discord.gg/{code}'.format(code=invite.code)
+                invite = channel.create_invite(
+                    max_age=0,
+                    max_uses=0,
+                    unique=True,
+                    reason='First run invite generation.'
+                )
+                invite_url = 'https://discord.gg/{code}'.format(
+                    code=invite.code
+                )
                 return invite_url
 
-            server_one = self.client.api.guilds_create(name='GamesKeeper Emojis (1/2)')
-            server_two = self.client.api.guilds_create(name='GamesKeeper Emojis (2/2)')
+            server_one = self.client.api.guilds_create(
+                name='GamesKeeper Emojis (1/2)')
+            server_two = self.client.api.guilds_create(
+                name='GamesKeeper Emojis (2/2)')
 
-            server_one_channel = server_one.create_text_channel(name='GamesKeeper')
-            server_two_channel = server_two.create_text_channel(name='GamesKeeper')
+            server_one_channel = server_one.create_text_channel(
+                name='GamesKeeper')
+            server_two_channel = server_two.create_text_channel(
+                name='GamesKeeper')
 
-            server_one_admin = server_one.create_role(name='Admin', permissions=9)
-            server_two_admin = server_two.create_role(name='Admin', permissions=9)
+            server_one_admin = server_one.create_role(
+                name='Admin', permissions=9)
+            server_two_admin = server_two.create_role(
+                name='Admin', permissions=9)
 
             server_one_invite = gen_invite(server_one_channel)
             server_two_invite = gen_invite(server_two_channel)
@@ -310,9 +347,13 @@ class CorePlugin(Plugin):
                     encoded_string = base64.encodebytes(emoji_image.read())
                     emoji_image_string = encoded_string.decode()
                     name = emoji.replace('.png', '')
-                    emoji = self.client.api.guilds_emojis_create(server_one.id, 'Setting up Uno Cards!', name=name, image='data:image/png;base64,{}'.format(emoji_image_string))
-                    uno_emojis[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
-            
+                    emoji = self.client.api.guilds_emojis_create(
+                        server_one.id, 'Setting up Uno Cards!',
+                        name=name, image='data:image/png;base64,{}'
+                            .format(emoji_image_string))
+                    uno_emojis[emoji.name] = '{name}:{emoji_id}'.format(
+                        name=emoji.name, emoji_id=emoji.id)
+
             for emoji in os.listdir(server_two_path):
                 with open('{}/{}'.format(server_two_path, emoji), 'rb') as emoji_image:
                     encoded_string = base64.encodebytes(emoji_image.read())
@@ -323,15 +364,18 @@ class CorePlugin(Plugin):
                     if name.startswith('Hangman'):
                         hangman_emotes[name.replace('Hangman', '', -1)] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
                     elif name.startswith('TicTacToe'):
-                        ttt_emojis[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
+                        ttt_emojis[emoji.name] = '{name}:{emoji_id}'.format(
+                            name=emoji.name, emoji_id=emoji.id)
                     elif name in c4_names:
-                        connect4_emotes[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
+                        connect4_emotes[emoji.name] = '{name}:{emoji_id}'.format(
+                            name=emoji.name, emoji_id=emoji.id)
                     else:
-                        uno_emojis[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
+                        uno_emojis[emoji.name] = '{name}:{emoji_id}'.format(
+                            name=emoji.name, emoji_id=emoji.id)
 
             with open("config.yaml", 'r') as config:
                 current_config = yaml.safe_load(config)
-            
+
             emote_server_info = {
                 'invites': {
                     'server_one': server_one_invite,
@@ -359,7 +403,7 @@ class CorePlugin(Plugin):
                 yaml.safe_dump(current_config, f)
 
         if not bot_config.first_run and not hasattr(bot_config, 'uno_emojis'):
-            
+
             c4_names = ['Blank', 'Blue', 'BlueNoBorder', 'Red', 'RedNoBorder']
 
             hangman_emotes = {}
@@ -371,22 +415,26 @@ class CorePlugin(Plugin):
             server_two = self.state.guilds.get(bot_config.emoji_servers['IDs']['server_two'])
 
             for emoji in server_one.emojis.values():
-                uno_emotes[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
-            
+                uno_emotes[emoji.name] = '{name}:{emoji_id}'.format(
+                    name=emoji.name, emoji_id=emoji.id)
+
             for emoji in server_two.emojis.values():
                 name = emoji.name
                 if name.startswith('Hangman'):
                     hangman_emotes[name.replace('Hangman', '', -1)] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
                 elif name.startswith('TicTacToe'):
-                    ttt_emotes[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
+                    ttt_emotes[emoji.name] = '{name}:{emoji_id}'.format(
+                        name=emoji.name, emoji_id=emoji.id)
                 elif name in c4_names:
-                    c4_emotes[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
+                    c4_emotes[emoji.name] = '{name}:{emoji_id}'.format(
+                        name=emoji.name, emoji_id=emoji.id)
                 else:
-                    uno_emotes[emoji.name] = '{name}:{emoji_id}'.format(name=emoji.name, emoji_id=emoji.id)
-            
+                    uno_emotes[emoji.name] = '{name}:{emoji_id}'.format(
+                        name=emoji.name, emoji_id=emoji.id)
+
             with open("config.yaml", 'r') as config:
                 current_config = yaml.safe_load(config)
-            
+
             current_config['uno_emojis'] = uno_emotes
             current_config['connect4_emotes'] = c4_emotes
             current_config['hangman_emotes'] = hangman_emotes
@@ -440,7 +488,7 @@ class CorePlugin(Plugin):
             event.msg.reply('', attachments=[('result.txt', result)])
         else:
             event.msg.reply(PY_CODE_BLOCK.format(result))
-    
+
     @Plugin.command('sql', level=-1)
     def command_sql(self, event):
         """
@@ -456,7 +504,8 @@ class CorePlugin(Plugin):
                 cur.execute(event.codeblock.format(e=event))
                 dur = time.time() - start
                 if not cur.description:
-                    return event.msg.reply('_took {}ms - no result_'.format(int(dur * 1000)))
+                    return event.msg.reply('_took {}ms - no result_'.format(
+                        int(dur * 1000)))
                 tbl.set_header(*[desc[0] for desc in cur.description])
 
                 for row in cur.fetchall():
@@ -468,21 +517,21 @@ class CorePlugin(Plugin):
                         '_took {}ms_'.format(int(dur * 1000)),
                         attachments=[('result.txt', result)])
 
-                event.msg.reply('```' + result + '```\n_took {}ms_\n'.format(int(dur * 1000)))
+                event.msg.reply('```' + result + '```\n_took {}ms_\n'.format(
+                    int(dur * 1000)))
         except psycopg2.Error as e:
             event.msg.reply('```{}```'.format(e.pgerror))
 
-
     def fresh_start(self, event, guild_id):
         new_guild = Guild.create(
-            guild_id = guild_id,
-            owner_id = event.guild.owner_id,
-            prefix = "+",
-            games_catergory = None,
-            spectator_roles = [],
-            enabled_games = 0,
-            referee_role = None,
-            role_allow_startgames = None,
-            booster_perks = False,
+            guild_id=guild_id,
+            owner_id=event.guild.owner_id,
+            prefix="+",
+            games_catergory=None,
+            spectator_roles=[],
+            enabled_games=0,
+            referee_role=None,
+            role_allow_startgames=None,
+            booster_perks=False,
         )
         return new_guild

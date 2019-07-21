@@ -1,15 +1,27 @@
 from GamesKeeper.db import BaseModel
 from GamesKeeper.models.guild import Guild
-from peewee import BigIntegerField, IntegerField, TextField, BooleanField, DoesNotExist
+from peewee import (BigIntegerField, IntegerField, TextField, BooleanField,
+                    DoesNotExist)
 from playhouse.postgres_ext import BinaryJSONField, ArrayField
 from disco.types.message import MessageEmbed
-from datetime import datetime, timedelta
+from datetime import datetime  # , timedelta
+from GamesKeeper import Emitter
+
 
 class GamesTypes(object):
     UNO = 0
     CONNECT_FOUR = 1
     TIC_TAC_TOE = 2
     HANGMAN = 3
+
+
+num_str = {
+    0: 'Uno',
+    1: 'Connect Four',
+    2: 'Tic-Tac-Toe',
+    3: 'Hangman'
+}
+
 
 @BaseModel.register
 class Games(BaseModel):
@@ -32,66 +44,67 @@ class Games(BaseModel):
 
     class Meta:
         db_table = 'games'
-    
+
     @classmethod
     def with_id(cls, game_id):
         return Games.get(id=game_id)
-    
+
     @classmethod
     def start(cls, event, game_channel, players, game_type):
-        num_str = {
-            0: 'Uno',
-            1: 'Connect Four',
-            2: 'Tic-Tac-Toe',
-            3: 'Hangman'
-        }
 
         guild = Guild.using_id(event.guild.id)
-        
+
         game = cls.create(
-            guild_id = event.guild.id,
-            game_channel = game_channel,
-            players = [x.id for x in players],
-            type_= game_type,
+            guild_id=event.guild.id,
+            game_channel=game_channel,
+            players=[x.id for x in players],
+            type_=game_type,
         )
 
         if guild.log_channel and guild.logs_enabled:
             embed = MessageEmbed()
-            
+            embed.title = 'Game Ended!'
             player_list = []
             for x in players:
                 player_list.append('`*` {x} | `{x.id}`'.format(x=x))
-            
+
             game_info = [
                 '**Game**: {}'.format(num_str.get(game_type)),
-                '**Channel**: <#{channel}> (`{channel}`)'.format(channel=game.game_channel),
+                '**Channel**: <#{channel}> (`{channel}`)'.format(
+                    channel=game.game_channel
+                ),
                 '**ID**: {}'.format(game.id)
             ]
             embed.add_field(name='Players »', value='\n'.join(player_list))
             embed.add_field(name='Game Info »', value='\n'.join(game_info))
-            embed.set_footer(text='Started By {}'.format(event.author), icon_url=event.author.get_avatar_url())
+            embed.set_footer(
+                text='Started By {}'.format(event.author),
+                icon_url=event.author.get_avatar_url()
+            )
             embed.timestamp = datetime.utcnow().isoformat()
 
-            event.guild.channels.get(guild.log_channel).send_message(embed=embed)
+            event.guild.channels.get(guild.log_channel)\
+                .send_message(embed=embed)
 
-        return
-    
+        return game
+
     def end_c4(self, data):
         pass
-    
+
     def end_uno(self, data):
         pass
-    
+
     def end_ttt(self, data):
         pass
-    
+
     def end_hm(self, data):
         pass
 
+
 class UnoRules(object):
-    jump_in = 1 << 0 
+    jump_in = 1 << 0
     stack_draws = 1 << 1
-    seven_swap = 1 << 2 
+    seven_swap = 1 << 2
     super_swap = 1 << 3
     cancel_skip = 1 << 4
     special_multiplay = 1 << 5
@@ -127,17 +140,17 @@ class Users(BaseModel):
     @classmethod
     def with_id(cls, user_id):
         return Users.get(id=user_id)
-    
+
     def get_enabled(self):
         rules = []
 
         if self.uno_rules == 0:
             return []
-        
+
         for i in range(len(UnoRules.num)):
             if self.uno_rules & 1 << i:
                 rules.append(1 << i)
-        
+
         return rules
 
     def get_enabled_rules(self):
@@ -145,13 +158,13 @@ class Users(BaseModel):
 
         if self.uno_rules == 0:
             return []
-        
+
         for i in range(len(UnoRules.num)):
             if self.uno_rules & 1 << i:
                 rules.append(UnoRules.num[1 << i])
-        
+
         return rules
-    
+
     def int_to_type(self, int_):
         types = {
             1: UnoRules.jump_in,
@@ -164,3 +177,53 @@ class Users(BaseModel):
             8: UnoRules.endless_draw,
         }
         return types.get(int_, None)
+
+
+@Emitter.on('EndC4')
+def end_connect_four(var):
+    game_data = var
+    game = Games.with_id(game_data.id)
+    game.winner = game_data.winner
+    game.turn_count = game_data.turns
+    game.ended = True
+    game.save()
+
+    guild = Guild.using_id(game_data.guild.id)
+
+    board = game_data.game_board.get_final()
+    for x in range(4):
+        board = board[:board.rfind('\n')]
+
+    if guild.log_channel and guild.logs_enabled:
+        embed = MessageEmbed()
+        embed.title = 'Game Ended!'
+        player_list = []
+        players = [game_data.guild.members.get(x) for x in game_data.players]
+        for x in players:
+            player_list.append('`*` {x} | `{x.id}`'.format(x=x))
+
+        game_info = [
+            '**Game**: {}'.format(num_str.get(1)),
+            '**Total Turns**: {}'.format(
+                game.turn_count
+            ),
+            '**ID**: {}'.format(game.id)
+        ]
+        embed.add_field(name='Players »', value='\n'.join(player_list))
+        embed.add_field(name='Game Info »', value='\n'.join(game_info))
+        embed.set_footer(
+            text='The Winner Is {}'.format(
+                game_data.guild.members.get(game_data.winner).user),
+            icon_url=game_data.guild.members.get(game_data.winner)
+                .user.get_avatar_url()
+        )
+        embed.timestamp = datetime.utcnow().isoformat()
+
+        game_data.guild.channels.get(guild.log_channel)\
+            .send_message(embed=embed)
+
+        bembed = MessageEmbed()
+        bembed.description = board
+        bembed.title = 'Game Board'
+        game_data.guild.channels.get(guild.log_channel)\
+            .send_message(embed=bembed)

@@ -35,6 +35,7 @@ DEFAULT_BOARD_new = """** **\n{blank_space}{blank_space}{blank_space}{blank_spac
 {endgame_stuff}
 """
 
+
 class Connect4():
 
     def __init__(self, event, players):
@@ -51,7 +52,8 @@ class Connect4():
         self.selected = None
         self.game_over = False
         self.winner = None
-    
+        self.id = None
+
     def sort_players(self, players):
         number = randrange(10)
         if number % 2 == 0:
@@ -62,17 +64,17 @@ class Connect4():
             self.blue_player = Connect4Player(players[1], "blue")
             self.red_player = Connect4Player(players[0], "red")
             self.current_turn = self.blue_player
-        
+
         return [players[0].id, players[1].id]
 
     def create_channel(self, players):
         guild_obj = Guild.using_id(self.guild.id)
-        
+
         channel_name = "{}_vs_{}".format(self.red_player.user_object, self.blue_player.user_object)
         channel_name = channel_name.replace('#', '-')
         channel_name = channel_name.replace('#', '-')
         channel = self.guild.create_channel(parent_id=guild_obj.games_category, name=channel_name, channel_type=ChannelType.GUILD_TEXT)
-        
+
         self.update_permissions(channel, guild_obj)
         return channel
 
@@ -86,20 +88,20 @@ class Connect4():
                 ow.deny.add(Permissions.MANAGE_MESSAGES)
                 ow.deny.add(Permissions.ADD_REACTIONS)
                 ow.save()
-        
+
         if len(guild_obj.spectator_roles) > 0:
             for spec in guild_obj.spectator_roles:
                 role = self.guild.roles.get(spec)
                 ow = channel.create_overwrite(entity=role)
                 ow.allow.add(Permissions.READ_MESSAGES)
                 ow.save()
-        
+
         for player in self.players:
             member = self.guild.get_member(player)
             ow = channel.create_overwrite(entity=member)
             ow.allow.add(Permissions.READ_MESSAGES)
             ow.save()
-    
+
     def handle_turn(self, event):
         if event.user_id != self.current_turn.id or event.message_id != self.game_board.game_message.id:
             return False
@@ -119,7 +121,7 @@ class Connect4():
             }
             place = switcher.get(event.emoji.name, None)
             self.selected = place
-        
+
         if self.selected == None or self.game_board.spots[self.selected][0].taken:
             return False
 
@@ -147,9 +149,9 @@ class Connect4():
                     self.current_turn = self.red_player
             else:
                 self.end_game()
-        
+
         return isOver
-    
+
     def check_tie(self):
         is_tie = True
         for row in range(len(self.game_board.spaces)):
@@ -163,7 +165,7 @@ class Connect4():
         return is_tie
 
     def clean_reactions(self):
-        switcher = { 
+        switcher = {
                 'a': '\U0001f1e6',
                 'b': '\U0001f1e7',
                 'c': '\U0001f1e8',
@@ -177,20 +179,27 @@ class Connect4():
             emote,
             YES_EMOJI
         ]
+
         def rvm_reaction(emoji):
             gevent.sleep(1)
-            self.game_board.game_message.delete_reaction(emoji, self.current_turn.id)
-        
+            self.game_board.game_message.delete_reaction(
+                emoji, self.current_turn.id
+            )
+
         for x in emotes:
             gevent.spawn(rvm_reaction(x))
 
     def end_game(self):
-        self.game_channel.send_message('Game ended, the winner is **{}**!'.format(self.guild.get_member(self.winner).user))
+        self.game_channel.send_message(
+            'Game ended, the winner is **{}**!'.format(
+                self.guild.get_member(self.winner).user
+            )
+        )
         self.game_over = True
         return True
-    
+
     def check_wins(self, player_id):
-        #Check every row for a win
+        # Check every row for a win
         is_over = False
         current_count = 0
         for row in range(len(self.game_board.spaces)):
@@ -207,15 +216,15 @@ class Connect4():
         if current_count >= 4:
             is_over = True
             return is_over
-        
-        #Check every column for a win
+
+        # Check every column for a win
         current_count = 0
         for spot in reversed(list(self.game_board.spots[self.game_board.last_play['col']].values())):
             if spot.owner_id == player_id:
                 current_count = current_count + 1
             else:
                 current_count = 0
-            
+
             if current_count == 4:
                 self.winner = player_id
                 break
@@ -224,13 +233,13 @@ class Connect4():
             is_over = True
             return is_over
 
-        #Checks all diagonals for a win.
+        # Checks all diagonals for a win.
         found = self.check_diag(self.game_board.last_play, player_id)
 
         if found:
             self.winner = player_id
             is_over = True
-        
+
         return is_over
 
     def check_diag(self, pos, player_id):
@@ -246,7 +255,7 @@ class Connect4():
             return True
 
         return False
-    
+
     def index_2d(self, v):
         board_list = self.game_board.spaces
         for i, x in enumerate(board_list):
@@ -276,7 +285,7 @@ class Connect4():
                     break
             else:
                 break
-        
+
         next_check_row = row
         next_check_col = col
         if 0 < next_check_row < 5:
@@ -308,7 +317,7 @@ class Connect4():
             return True
         else:
             return False
-    
+
     def diag_right(self, row, col, player_id):
         next_check_row = row
         next_check_col = col
@@ -332,7 +341,7 @@ class Connect4():
                     break
             else:
                 break
-        
+
         next_check_row = row
         next_check_col = col
         if 0 < next_check_row < 5:
@@ -359,7 +368,7 @@ class Connect4():
                     break
             else:
                 break
-        
+
         if count_right >= 4:
             return True
         else:
@@ -374,7 +383,6 @@ class Connect4Player():
         self.last_turn = None
         self.turns = 0
         self.id = player.id
-    
 
     def __str__(self):
         return '{username}#{discrim}'.format(username=self.user_object.username, discrim=self.user_object.discriminator)
@@ -400,6 +408,7 @@ class Connect4Spot():
     def update(self, color, turn):
         self.color = self.colors.get(color)
         self.turn = turn
+
 
 class Connect4Board():
     def __init__(self, blue, red, channel):
@@ -462,9 +471,9 @@ class Connect4Board():
                 5: Connect4Spot()
             }
         }
-        
-        #Notes:
-        #spaces[ROW][COL]
+
+        # Notes:
+        # spaces[ROW][COL]
         self.spaces = [[self.spots["a"][0], self.spots["b"][0], self.spots["c"][0], self.spots["d"][0], self.spots["e"][0], self.spots["f"][0], self.spots["g"][0]], #0
                 [self.spots["a"][1], self.spots["b"][1], self.spots["c"][1], self.spots["d"][1], self.spots["e"][1], self.spots["f"][1], self.spots["g"][1]], #1
                 [self.spots["a"][2], self.spots["b"][2], self.spots["c"][2], self.spots["d"][2], self.spots["e"][2], self.spots["f"][2], self.spots["g"][2]], #2
@@ -481,12 +490,12 @@ class Connect4Board():
         # Last thing played
         self.last_play = {
             'row': None,
-            'col': None 
+            'col': None
         }
 
     def send_message(self, channel):
         msg = channel.send_message(str(self))
-        #A B C D E F G
+        # A B C D E F G
         emotes = [
             "\U0001f1e6",
             "\U0001f1e7",
@@ -497,13 +506,14 @@ class Connect4Board():
             "\U0001f1ec",
             YES_EMOJI
         ]
+
         def add_reaction(emoji):
             gevent.sleep(1)
             msg.add_reaction(emoji)
-        
+
         for x in emotes:
             gevent.spawn(add_reaction(x))
-        
+
         return msg
 
     def update_board(self):
@@ -537,17 +547,34 @@ class Connect4Board():
         }
         return {
             'updated': True,
-            'next_turn': 'red' if player.color == 'blue' else 'blue' 
+            'next_turn': 'red' if player.color == 'blue' else 'blue'
         }
-    
+
     def __str__(self):
         return DEFAULT_BOARD_new.format(
-            spaces=self.spaces, 
-            blank_space=Connect4Spot.colors['blank'], 
+            spaces=self.spaces,
+            blank_space=Connect4Spot.colors['blank'],
             red_player=self.red_player,
             red_status=self.red_status,
-            blue_player=self.blue_player, 
+            blue_player=self.blue_player,
             blue_status=self.blue_status,
+            endgame_stuff=self.endgame_stuff,
+            blue='<:{}>'.format(
+                bot_config.connect4_emotes.get("BlueNoBorder", None)
+            ),
+            red='<:{}>'.format(
+                bot_config.connect4_emotes.get("RedNoBorder", None)
+            ),
+        )
+
+    def get_final(self):
+        return DEFAULT_BOARD_new.format(
+            spaces=self.spaces,
+            blank_space=Connect4Spot.colors['blank'],
+            red_player=self.red_player,
+            red_status=self.red_status,
+            blue_player='',
+            blue_status='',
             endgame_stuff=self.endgame_stuff,
             blue='<:{}>'.format(bot_config.connect4_emotes.get("BlueNoBorder", None)),
             red='<:{}>'.format(bot_config.connect4_emotes.get("RedNoBorder", None)),

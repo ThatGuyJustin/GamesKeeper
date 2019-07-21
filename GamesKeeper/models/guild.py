@@ -1,5 +1,6 @@
 from GamesKeeper.db import BaseModel
-from peewee import BigIntegerField, IntegerField, TextField, BooleanField, DoesNotExist
+from peewee import (BigIntegerField, IntegerField, TextField, BooleanField,
+                    DoesNotExist)
 from playhouse.postgres_ext import BinaryJSONField, ArrayField
 
 
@@ -14,7 +15,9 @@ class Guild(BaseModel):
     referee_role = BigIntegerField(null=True)
     role_allow_startgames = BigIntegerField(null=True)
     booster_perks = BooleanField(default=False)
-    commands_disabled_channels = ArrayField(BigIntegerField, null=True, index=False)
+    commands_disabled_channels = ArrayField(
+        BigIntegerField, null=True, index=False
+    )
     logs_enabled = BooleanField(default=True)
     log_channel = BigIntegerField(null=True)
 
@@ -34,10 +37,10 @@ class Guild(BaseModel):
 
     def enabled_games_emotes(self):
         game_types = {
-            1 << 0: "<:uno:594231154098438153>", #Uno
-            1 << 1: "<:connectfour:594231155172179985>", #Connect4
-            1 << 2: "<:tictactoe:594231153830133761>", #TicTacToe
-            1 << 3: "<:hangman:594231153914019840>", #Hangman
+            1 << 0: "<:uno:594231154098438153>",  # Uno
+            1 << 1: "<:connectfour:594231155172179985>",  # Connect4
+            1 << 2: "<:tictactoe:594231153830133761>",  # TicTacToe
+            1 << 3: "<:hangman:594231153914019840>",  # Hangman
             # 1 << 4: "2048", #2048
             # 1 << 5: "<:trivia:594231155012665354>", #Trivia
         }
@@ -55,10 +58,10 @@ class Guild(BaseModel):
 
     def disabled_games_emotes(self):
         game_types = {
-            1 << 0: "<:uno:594231154098438153>", #Uno
-            1 << 1: "<:connectfour:594231155172179985>", #Connect4
-            1 << 2: "<:tictactoe:594231153830133761>", #TicTacToe
-            1 << 3: "<:hangman:594231153914019840>", #Hangman
+            1 << 0: "<:uno:594231154098438153>",  # Uno
+            1 << 1: "<:connectfour:594231155172179985>",  # Connect4
+            1 << 2: "<:tictactoe:594231153830133761>",  # TicTacToe
+            1 << 3: "<:hangman:594231153914019840>",  # Hangman
             # 1 << 4: "2048", #2048
             # 1 << 5: "<:trivia:594231155012665354>", #Trivia
         }
@@ -91,10 +94,10 @@ class Guild(BaseModel):
 
     def check_if_listed(self, game, check_type):
         game_types = {
-            "uno": 1 << 0, #Uno
-            'c4': 1 << 1, #Connect4
-            'ttt': 1 << 2, #TicTacToe
-            'hm': 1 << 3, #Hangman
+            "uno": 1 << 0,  # Uno
+            'c4': 1 << 1,  # Connect4
+            'ttt': 1 << 2,  # TicTacToe
+            'hm': 1 << 3,  # Hangman
             # '2048': 1 << 4, #2048
             # 'trivia': 1 << 5, #Trivia
         }

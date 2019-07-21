@@ -58,12 +58,14 @@ TTT_STR = """
 \♦ W/L Ratio: {TTT_STATS.wl}
 \♦ Total Games: {TTT_STATS.games}
 """
+
+
 class StatsPlugin(Plugin):
     global_plugin = True
 
     def load(self, ctx):
         super(StatsPlugin, self).load(ctx)
-    
+
     @Plugin.command('stats', '[user:user] [game:str]', aliases=['userstats', 'mystats'])
     def cmd_stats(self, event, user=None, game=None):
         """
@@ -71,7 +73,7 @@ class StatsPlugin(Plugin):
         Usage: `stats`
         Other User's Stats: `stats [@User#1234 or UserID]`
         """
-        
+
         embed = MessageEmbed()
 
         class UNO_STATS(object):
@@ -80,10 +82,12 @@ class StatsPlugin(Plugin):
             cards_drawn = 0
             cards_played = 0
             wl = 0.0
+
         class C4_STATS(object):
             wins = 0
             wl = 0
             games = 0
+
         class HANGMAN_STATS(object):
             wins = 0
             wl = 0
@@ -91,6 +95,7 @@ class StatsPlugin(Plugin):
             total_guesses_i = 0
             total_guesses_c = 0
             total_guesses = 0
+
         class TTT_STATS(object):
             wins = 0
             wl = 0
@@ -103,25 +108,25 @@ class StatsPlugin(Plugin):
             UNO_STATS.cards_played = 0
             # UNO_STATS.cards_drawn = games.select(fn.Sum(Games.cards_drawn)).execute().next().cards_drawn
             # UNO_STATS.cards_played = games.select(fn.Sum(Games.cards_played)).execute().next().cards_played
-            UNO_STATS.wl = str(round(UNO_STATS.wins / (UNO_STATS.games - UNO_STATS.wins), 3)) if UNO_STATS.games > 0 else '0'
-        
+            UNO_STATS.wl = str(round(UNO_STATS.wins / UNO_STATS.games, 3)) if UNO_STATS.games > 0 else '0'
+
         def calc_hangman(games, user):
             HANGMAN_STATS.games = games.count()
             HANGMAN_STATS.wins = games.where(Games.winner == user.id).count()
             HANGMAN_STATS.total_guesses = games.select(fn.Sum(Games.guesses_correct + Games.guesses_incorrect).alias('total')).execute().next().total or '0'
             HANGMAN_STATS.total_guesses_c = games.select(fn.Sum(Games.guesses_correct)).execute().next().guesses_correct or '0'
             HANGMAN_STATS.total_guesses_i = games.select(fn.Sum(Games.guesses_incorrect)).execute().next().guesses_incorrect or '0'
-            HANGMAN_STATS.wl = str(round(HANGMAN_STATS.wins / (HANGMAN_STATS.games - HANGMAN_STATS.wins), 3)) if HANGMAN_STATS.games > 0 else '0'
-        
+            HANGMAN_STATS.wl = str(round(HANGMAN_STATS.wins / HANGMAN_STATS.games, 3)) if HANGMAN_STATS.games > 0 else '0'
+
         def calc_c4(games, user):
             C4_STATS.games = games.count()
             C4_STATS.wins = games.where(Games.winner == user.id).count()
-            C4_STATS.wl = str(round(C4_STATS.wins / (C4_STATS.games - C4_STATS.wins), 3)) if C4_STATS.games > 0 else '0'
-        
+            C4_STATS.wl = str(round(C4_STATS.wins / C4_STATS.games, 3)) if C4_STATS.games > 0 else '0'
+
         def calc_ttt(games, user):
             TTT_STATS.games = games.count()
             TTT_STATS.wins = games.where(Games.winner == user.id).count()
-            TTT_STATS.wl = str(round(TTT_STATS.wins / (TTT_STATS.games - TTT_STATS.wins), 3)) if TTT_STATS.games > 0 else '0'
+            TTT_STATS.wl = str(round(TTT_STATS.wins / TTT_STATS.games, 3)) if TTT_STATS.games > 0 else '0'
 
         def compile_stats(user):
             games = Games.select().where((Games.ended == True) & (Games.players.contains(user.id)))
@@ -129,11 +134,16 @@ class StatsPlugin(Plugin):
             games_hangman = games.where(Games.type_ == Games.Types.HANGMAN)
             games_ttt = games.where(Games.type_ == Games.Types.TIC_TAC_TOE)
             games_uno = games.where(Games.type_ == Games.Types.UNO)
-            
+
             gp = games.count()
             gw = games.where(Games.winner == user.id).count()
             gl = gp - gw
-            wl = str(round(gw/gl, 3)) if gp > 0 else '0'
+            wl = None
+
+            if gp > 0:
+                wl = str(round(gw/gp, 3))
+            else:
+                wl = '0'
 
             calc_uno(games_uno, user)
             calc_hangman(games_hangman, user)
@@ -152,11 +162,11 @@ class StatsPlugin(Plugin):
             embed.add_field(name='<:{}>'.format('tictactoe:594231153830133761'), value=TTT_STR.format(TTT_STATS=TTT_STATS), inline=True)
             event.msg.reply('', embed=embed)
 
-        if user == None and game == None:
+        if user is None and game is None:
             user = event.author
             return compile_stats(user)
-        
-        if user != None:
+
+        if user is not None:
             if isinstance(user, int):
                 try:
                     user = self.state.users.get(user)
@@ -166,4 +176,3 @@ class StatsPlugin(Plugin):
                 return compile_stats(user)
             else:
                 return compile_stats(user)
-            
