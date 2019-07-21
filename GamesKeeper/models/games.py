@@ -1,6 +1,9 @@
 from GamesKeeper.db import BaseModel
+from GamesKeeper.models.guild import Guild
 from peewee import BigIntegerField, IntegerField, TextField, BooleanField, DoesNotExist
 from playhouse.postgres_ext import BinaryJSONField, ArrayField
+from disco.types.message import MessageEmbed
+from datetime import datetime, timedelta
 
 class GamesTypes(object):
     UNO = 0
@@ -36,12 +39,54 @@ class Games(BaseModel):
     
     @classmethod
     def start(cls, event, game_channel, players, game_type):
-        return cls.create(
+        num_str = {
+            0: 'Uno',
+            1: 'Connect Four',
+            2: 'Tic-Tac-Toe',
+            3: 'Hangman'
+        }
+
+        guild = Guild.using_id(event.guild.id)
+        
+        game = cls.create(
             guild_id = event.guild.id,
             game_channel = game_channel,
             players = [x.id for x in players],
             type_= game_type,
         )
+
+        if guild.log_channel and guild.logs_enabled:
+            embed = MessageEmbed()
+            
+            player_list = []
+            for x in players:
+                player_list.append('`*` {x} | `{x.id}`'.format(x=x))
+            
+            game_info = [
+                '**Game**: {}'.format(num_str.get(game_type)),
+                '**Channel**: <#{channel}> (`{channel}`)'.format(channel=game.game_channel),
+                '**ID**: {}'.format(game.id)
+            ]
+            embed.add_field(name='Players »', value='\n'.join(player_list))
+            embed.add_field(name='Game Info »', value='\n'.join(game_info))
+            embed.set_footer(text='Started By {}'.format(event.author), icon_url=event.author.get_avatar_url())
+            embed.timestamp = datetime.utcnow().isoformat()
+
+            event.guild.channels.get(guild.log_channel).send_message(embed=embed)
+
+        return
+    
+    def end_c4(self, data):
+        pass
+    
+    def end_uno(self, data):
+        pass
+    
+    def end_ttt(self, data):
+        pass
+    
+    def end_hm(self, data):
+        pass
 
 class UnoRules(object):
     jump_in = 1 << 0 

@@ -18,6 +18,7 @@ from disco.util.sanitize import S
 
 from GamesKeeper import NO_EMOJI_ID, YES_EMOJI_ID, NO_EMOJI, YES_EMOJI
 from GamesKeeper.models.guild import Guild
+from GamesKeeper.models.games import Games
 from GamesKeeper.games.connectfour import Connect4
 
 class ConnectFourPlugin(Plugin):
@@ -103,6 +104,7 @@ class ConnectFourPlugin(Plugin):
         players = [event.author, user]
         game = Connect4(event, players)
         self.games[game.game_channel.id] = game
+        Games.start(event, game.game_channel.id, players, 1)
 
         slash_shrug = "**{}** Vs **{}**".format(players[0], players[1])
         msg.edit("Game {lol} has started in channel <#{channel}>! Please enjoy the game, the end results will be shown in this channel once the game is over!".format(lol=slash_shrug, channel=game.game_channel.id))

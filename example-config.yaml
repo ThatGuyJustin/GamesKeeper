@@ -10,6 +10,9 @@ bot:
 
 first_run: true
 
+#Channel that is used for logging control messages for the bot.
+logging_channel: 000000000000
+
 #Leave until fix is found for startup.
 connect4_emotes:
   broken: true

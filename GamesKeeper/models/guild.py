@@ -15,7 +15,7 @@ class Guild(BaseModel):
     role_allow_startgames = BigIntegerField(null=True)
     booster_perks = BooleanField(default=False)
     commands_disabled_channels = ArrayField(BigIntegerField, null=True, index=False)
-    logs_enabled = BigIntegerField(null=True)
+    logs_enabled = BooleanField(default=True)
     log_channel = BigIntegerField(null=True)
 
     class Meta:
@@ -108,11 +108,3 @@ class Guild(BaseModel):
                 return True
             else:
                 return False
-
-# Prefix text
-# Games Category int(or big int, idk how b1nzy stored it)
-# Spectator Roles list(int) ^ ^ ^ ^
-# Enabled Games binary number
-# Referee Role int Same as above
-# CanStartGames Role int Same as above
-# boosterPerks boolean(TBD on what exactly that does)

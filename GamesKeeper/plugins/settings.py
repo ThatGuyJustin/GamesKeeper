@@ -52,12 +52,17 @@ class SettingsPlugin(Plugin):
         __**Referee Role**__: {rr}
         __**Games Category**__: {gc}
         __**Spectator Roles**__: {sr}
+        __**Game Logs**__: {gl}
         """
         settings = Guild.using_id(event.guild.id)
 
         games_category = None
         if settings.games_category:
             games_category = event.guild.channels.get(settings.games_category)
+        
+        log_channel = None
+        if settings.log_channel:
+            log_channel = event.guild.channels.get(settings.log_channel)
         
         spectator_roles = []
         if len(settings.spectator_roles) > 0:
@@ -69,15 +74,52 @@ class SettingsPlugin(Plugin):
             prefix=settings.prefix, 
             rr='{}'.format('`None`' if settings.referee_role == None else '<@&' + str(settings.referee_role) + '>'), 
             gc='{} (`{}`)'.format(games_category.name, games_category.id) if settings.games_category else '`None`',
-            sr='{}'.format('`None`' if len(spectator_roles) == 0 else ', '.join(spectator_roles))
+            sr='{}'.format('`None`' if len(spectator_roles) == 0 else ', '.join(spectator_roles)),
+            gl='({}) {channel}'.format('<{}>'.format(YES_EMOJI if settings.logs_enabled else NO_EMOJI), channel='{} (`{}`)'.format(log_channel.name, log_channel.id) if settings.log_channel else '`None`')
         ))
         embed.add_field(name='Enabled Games', value='{}'.format(''.join(settings.enabled_games_emotes())), inline=True)
         embed.add_field(name='Disabled Games', value='{}'.format(''.join(settings.disabled_games_emotes())), inline=True)
         embed.set_footer(text='Go get help with settings, do {}help settings'.format(settings.prefix), icon=self.state.me.get_avatar_url())
         embed.set_thumbnail(url=event.guild.get_icon_url('png'))
         return event.msg.reply('', embed=embed)
+
+    @Plugin.command('logs enable', context={'mode': 'enable'}, group='settings', level=CommandLevels.ADMIN)
+    @Plugin.command('logs disable', context={'mode': 'disable'}, group='settings', level=CommandLevels.ADMIN)
+    @Plugin.command('logs channel', '<channel:channel>', context={'mode': 'setchannel'}, group='settings', level=CommandLevels.ADMIN)
+    def logs(self, event, channel=None, mode=None):
+        """
+        This command is used to change the Game Logs settings.
+        Usage: `update logs enable/disable/channel [ChannelID, Mention, Name]`
+        """
+        guild = Guild.using_id(event.guild.id)
+        if mode == 'enable':
+            guild.logs_enabled = True
+            guild.save()
+            return event.msg.reply('<{}> Logs have been enabled!'.format(YES_EMOJI))
+        
+        if mode == 'disable':
+            guild.logs_enabled = False
+            guild.save()
+            return event.msg.reply('<{}> Logs have been disabled!'.format(YES_EMOJI))
+        
+        if mode == 'setchannel':
+            if isinstance(channel, int):
+                if guild.log_channel == channel:
+                    return event.msg.reply('`Error:` New logs channel matches the current logs channel.')
+                else:
+                    guild.log_channel = channel
+                    guild.save()
+                    new_channel = event.guild.channels[channel]
+                    return event.msg.reply('Updated the logs channel to **{name}** (`{id}`)'.format(name=new_channel.name, id=new_channel.id))
+            else:
+                if guild.log_channel == channel.id:
+                    return event.msg.reply('`Error:` New logs channel matches the current logs channel.')
+                else:
+                    guild.log_channel = channel.id
+                    guild.save()
+                    return event.msg.reply('Updated the logs channel to **{name}** (`{id}`)'.format(name=channel.name, id=channel.id))
     
-    @Plugin.command('prefix', '<prefix:str...>', aliases=['setprefix', 'changeprefix'], level=CommandLevels.ADMIN, group='update')
+    @Plugin.command('prefix', '<prefix:str...>', aliases=['setprefix', 'changeprefix'], level=CommandLevels.ADMIN, group='settings')
     def change_prefix(self, event, prefix):
         """
         This command is used to change the bot's prefix.
@@ -92,7 +134,7 @@ class SettingsPlugin(Plugin):
             guild.save()
             return event.msg.reply('Prefix has been updated to `{}`!'.format(guild.prefix))
     
-    @Plugin.command('gamescategory', '<channel:channel>', aliases=['setgamescategory', 'changegamescategory', 'setcategory', 'changecategory', 'gc'], level=CommandLevels.ADMIN, group='update')
+    @Plugin.command('gamescategory', '<channel:channel>', aliases=['setgamescategory', 'changegamescategory', 'setcategory', 'changecategory', 'gc'], level=CommandLevels.ADMIN, group='settings')
     def change_catergory(self, event, channel):
         """
         This command is used to change the games cetegory.
@@ -115,7 +157,7 @@ class SettingsPlugin(Plugin):
                 guild.save()
                 return event.msg.reply('Updated the games category to **{name}** (`{id}`)'.format(name=channel.name, id=channel.id))
     
-    @Plugin.command('setreferee', '<role:str...>', aliases=['setref', 'ref', 'referee'], level=CommandLevels.ADMIN, group='update')
+    @Plugin.command('setreferee', '<role:str...>', aliases=['setref', 'ref', 'referee'], level=CommandLevels.ADMIN, group='settings')
     def update_referee(self, event, role):
         """
         This command is used to change the referee role.
@@ -172,9 +214,9 @@ class SettingsPlugin(Plugin):
                 guild.save()
                 return event.msg.reply('Game has been disabled!')
 
-    @Plugin.command('addspec', '<role:str...>', aliases=['add spec', 'spec add', 'spectators add', 'add spectators', 'add spectator', 'spectator add'], level=CommandLevels.ADMIN, group='update', context={'mode': 'add'})
-    @Plugin.command('listspec', aliases=['list spec', 'list add', 'spectators list', 'list spectators', 'list spectator', 'spectator list'], level=CommandLevels.ADMIN, group='update', context={'mode': 'add'})
-    @Plugin.command('rvmspec', '<role:str...>', aliases=['rvm spec', 'spec rvm', 'spectators rvm', 'rvm spectators', 'rvm spectator', 'spectator rvm', 'remove spec', 'spec remove', 'spectators remove', 'remove spectators', 'remove spectator', 'spectator remove'], level=CommandLevels.ADMIN, group='update', context={'mode': 'rvm'})
+    @Plugin.command('addspec', '<role:str...>', aliases=['add spec', 'spec add', 'spectators add', 'add spectators', 'add spectator', 'spectator add'], level=CommandLevels.ADMIN, group='settings', context={'mode': 'add'})
+    @Plugin.command('listspec', aliases=['list spec', 'list add', 'spectators list', 'list spectators', 'list spectator', 'spectator list'], level=CommandLevels.ADMIN, group='settings', context={'mode': 'list'})
+    @Plugin.command('rvmspec', '<role:str...>', aliases=['rvm spec', 'spec rvm', 'spectators rvm', 'rvm spectators', 'rvm spectator', 'spectator rvm', 'remove spec', 'spec remove', 'spectators remove', 'remove spectators', 'remove spectator', 'spectator remove'], level=CommandLevels.ADMIN, group='settings', context={'mode': 'rvm'})
     def update_spectators(self, event, role, mode=None):
         """
         This command is used to update the spectator roles.

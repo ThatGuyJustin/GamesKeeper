@@ -39,8 +39,8 @@ class DevPlugin(Plugin):
             "**Total Global Games Played**: {}".format(Games.select(Games).count()),
             "\n",
             "__**System Stats**__",
-            "**CPU Usage**: {}".format(str(psutil.cpu_percent(interval=1))),
-            "**Ram Usage**: {}".format(str(psutil.virtual_memory().percent))
+            "**CPU Usage**: {}%".format(str(psutil.cpu_percent(interval=1))),
+            "**Ram Usage**: {}%".format(str(psutil.virtual_memory().percent))
         ]
         embed.description = '\n'.join(description)
         event.msg.reply('', embed=embed)
@@ -143,3 +143,8 @@ class DevPlugin(Plugin):
                 return event.msg.add_reaction(YES_EMOJI)
             except:
                 return event.msg.reply('I couldn\'t add the role to you. Please make sure you are in Server Two.')
+    
+    @Plugin.command('testing', level=-1)
+    def test_cmd(self, event):
+        pass
+        # EventListener.emit('EndC4', event)

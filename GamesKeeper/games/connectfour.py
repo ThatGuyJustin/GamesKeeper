@@ -28,7 +28,7 @@ DEFAULT_BOARD_new = """** **\n{blank_space}{blank_space}{blank_space}{blank_spac
 {spaces[3][0]}{spaces[3][1]}{spaces[3][2]}{spaces[3][3]}{spaces[3][4]}{spaces[3][5]}{spaces[3][6]}
 {spaces[4][0]}{spaces[4][1]}{spaces[4][2]}{spaces[4][3]}{spaces[4][4]}{spaces[4][5]}{spaces[4][6]}
 {spaces[5][0]}{spaces[5][1]}{spaces[5][2]}{spaces[5][3]}{spaces[5][4]}{spaces[5][5]}{spaces[5][6]}
-:regional_indicator_a::regional_indicator_b::regional_indicator_c::regional_indicator_d::regional_indicator_e::regional_indicator_f::regional_indicator_g:
+<:ConnectFourA:594260723798900738><:ConnectFourB:594260724847738900><:ConnectFourC:594260725497856002><:ConnectFourD:594260725501919302><:ConnectFourE:594260724839088138><:ConnectFourF:594260724696743937><:ConnectFourG:594260725468364801>
 
 {red} = `{red_player}` {red_status}
 {blue} = `{blue_player}` {blue_status}

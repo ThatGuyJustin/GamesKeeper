@@ -8,6 +8,8 @@ import os
 import base64
 import psycopg2
 import time
+import contextlib
+from ast import literal_eval
 
 from datetime import datetime, timedelta
 
@@ -107,6 +109,14 @@ class CorePlugin(Plugin):
 
         if event.message.author.bot:
             return
+        
+        if not event.message.content.startswith(guild.prefix) and event.message.mentions and self.state.me.id in event.message.mentions:
+            content = event.message.without_mentions
+            content = content.replace(' ', '', -1)
+            if 'prefix' in content.lower():
+                return event.channel.send_message('Prefix: `{}`'.format(guild.prefix))
+            else:
+                pass
 
         # Grab the list of commands
         commands = list(self.bot.get_commands_for_message(False, {}, guild.prefix, event.message))
@@ -119,6 +129,9 @@ class CorePlugin(Plugin):
             return
 
         for command, match in commands:
+
+            if command.name == 'settings' and len(commands) > 1:
+                continue
             
             needed_level = 0
             if command.level:
@@ -178,10 +191,10 @@ class CorePlugin(Plugin):
             embed.title = 'GamesKeeper Settings Help'
             description = [
                 'To change most settings, the command group is `update`',
-                '\♦ To change **Prefix**, use `{}update prefix`'.format(event.db_guild.prefix),
-                '\♦ To change **Games Category**, use `{}update gc`'.format(event.db_guild.prefix),
-                '\♦ To change the **Referee** role, use `{}update ref`'.format(event.db_guild.prefix),
-                '\♦ To update **Spectator** roles, use `{}update addspec/rvmspec`'.format(event.db_guild.prefix),
+                '\♦ To change **Prefix**, use `{}settings prefix`'.format(event.db_guild.prefix),
+                '\♦ To change **Games Category**, use `{}settings gc`'.format(event.db_guild.prefix),
+                '\♦ To change the **Referee** role, use `{}settings ref`'.format(event.db_guild.prefix),
+                '\♦ To update **Spectator** roles, use `{}settings addspec/rvmspec`'.format(event.db_guild.prefix),
                 '\♦ To **Enable/Disable Games**, use `{}games enable/disable`'.format(event.db_guild.prefix),
             ]
             embed.description = '\n'.join(description)
@@ -209,21 +222,59 @@ class CorePlugin(Plugin):
         Allow us to do what you wish you could do to your pings.
         """
         return event.msg.reply('YEET!')
-    
-    @Plugin.command('level', level=-1)
-    def cmd_level(self, event):
-        """
-        Dev command to get a user level.
-        """
-        if event.user_level is 0:
-            return event.msg.reply('>:C (0)')
-        else:
-            return event.msg.reply(event.user_level)
+
+    # @Plugin.schedule(60, init=False)
+    # def update_servers(self):
+    #     l = self.state.me.presence.game.name
+    #     l.split(' ')
+
+    @contextlib.contextmanager
+    def send_control_message(self):
+        embed = MessageEmbed()
+        embed.set_footer(text='GamesKeeper Log')
+        embed.timestamp = datetime.utcnow().isoformat()
+        embed.color = 0x779ecb
+        try:
+            yield embed
+            self.bot.client.api.channels_messages_create(
+                bot_config.logging_channel,
+                embed=embed
+            )
+        except:
+            self.log.exception('Failed to send control message:')
+            return
+
+    @Plugin.listen('Resumed')
+    def on_resumed(self, event):
+        self.client.update_presence(Status.ONLINE, Game(name='on {} Servers.'.format(len(self.state.guilds)), type=GameType.DEFAULT))
+        trace_event = literal_eval(event.trace[0])
+
+        with self.send_control_message() as embed:
+            embed.title = 'Resumed'
+            embed.color = 0xffb347
+            embed.add_field(name='Gateway Server', value=trace_event[0], inline=False)
+            embed.add_field(name='Session Server', value=trace_event[1]['calls'][0], inline=False)
+            embed.add_field(name='Replayed Events', value=str(self.client.gw.replayed_events))
 
     #Massive function to check for first run, and if so, create a blank server for all the emojis.
     @Plugin.listen('Ready')#, priority=Priority.BEFORE)
     def on_ready(self, event):
-        
+        self.client.update_presence(Status.ONLINE, Game(name='on {} Servers'.format(len(event.guilds)), type=GameType.DEFAULT))
+        trace_event = literal_eval(event.trace[0])
+        reconnects = self.client.gw.reconnects
+
+        self.log.info('Started session {}'.format(event.session_id))
+        with self.send_control_message() as embed:
+            if reconnects:
+                embed.title = 'Reconnected'
+                embed.color = 0xffb347
+            else:
+                embed.title = 'Connected'
+                embed.color = 0x77dd77
+
+            embed.add_field(name='Gateway Server', value=trace_event[0], inline=False)
+            embed.add_field(name='Session Server', value=trace_event[1]['calls'][0], inline=False)
+
         if bot_config.first_run != True:
             return
         

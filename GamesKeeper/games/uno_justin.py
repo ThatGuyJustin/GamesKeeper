@@ -19,7 +19,7 @@ class Uno():
         self.settings = GameSettings(self)
         self.deck = Deck()
         self.pile = Pile(self.deck.draw())
-        self.logMessage = ""
+        self.log_message = ""
         self.current_turn = None
         self.reverse = False
         self.players = self.setup_players(players)
@@ -60,7 +60,7 @@ class Uno():
         player_list = self.print_player_list()
         for player in ([self.current_turn] if only_current_player else self.players):
             embed = MessageEmbed()
-            embed.description = self.logMessage
+            embed.description = self.log_message
             embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/{}.png?v=1".format(self.pile.top_card.emoji_id))
             embed.set_author(name="Uno", icon_url="https://cdn.discordapp.com/emojis/{}.png?v=1".format(
                 bot_config.uno_emojis['uno'].split(':')[1]))
@@ -300,7 +300,7 @@ class Player():
         self.controller.messageLog = ""
         if len(self.getLegalCards()) == 0:
             if self.pile.drawTwoStacks > 0 or self.pile.drawFourStacks > 0:
-                self.controller.logMessage = "{} drew {} cards. ".format(self.user.username, self.pile.drawTwoStacks + self.pile.drawFourStacks, self.getNextPlayer().user.username)
+                self.controller.log_message = "{} drew {} cards. ".format(self.user.username, self.pile.drawTwoStacks + self.pile.drawFourStacks, self.getNextPlayer().user.username)
                 self.draw(self.pile.drawTwoStacks + self.pile.drawFourStacks)
                 self.pile.reset()
                 self.endTurn()
@@ -322,7 +322,7 @@ class Player():
         self.clearHint()
         self.controller.current_turn = self.getNextPlayer()
         if update_log:
-            self.controller.logMessage += "It is now {}'s turn.".format(self.controller.current_turn.user.username)
+            self.controller.log_message += "It is now {}'s turn.".format(self.controller.current_turn.user.username)
         self.controller.current_turn.startTurn()
         self.controller.update_messages()
 

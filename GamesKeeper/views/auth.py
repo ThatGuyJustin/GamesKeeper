@@ -42,6 +42,13 @@ def auth_discord():
     session['state'] = state
     return redirect(auth_url)
 
+@auth.route('/discord/yoink')
+def auth_discord_admin():
+    discord = make_discord_session(scope=('identify guilds.join', ))
+    auth_url, state = discord.authorization_url(current_app.config['discord']['AUTH_URL'])
+    session['state'] = state
+    return redirect(auth_url)
+
 @auth.route('/discord/callback')
 def auth_discord_callback():
     if request.values.get('error'):
