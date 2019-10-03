@@ -7,6 +7,7 @@ import gevent
 import psutil
 import os
 import json
+import decimal
 
 from datetime import datetime, timedelta
 
@@ -41,7 +42,8 @@ class DevPlugin(Plugin):
             "\n",
             "__**System Stats**__",
             "**CPU Usage**: {}%".format(str(psutil.cpu_percent(interval=1))),
-            "**Ram Usage**: {}%".format(str(psutil.virtual_memory().percent))
+            "**Ram Usage**: {}%".format(str(psutil.virtual_memory().percent)),
+            "**Ping**: `{}` ms".format(round(self.client.gw.latency * 1000, 2))
         ]
         embed.description = '\n'.join(description)
         event.msg.reply('', embed=embed)

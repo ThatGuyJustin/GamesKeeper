@@ -230,9 +230,9 @@ class CorePlugin(Plugin):
     @Plugin.command('ping', level=-1)
     def cmd_ping(self, event):
         """
-        Allow us to do what you wish you could do to your pings.
+        Returns the current latencey between the bot and Discord's API in Milliseconds.
         """
-        return event.msg.reply('YEET!')
+        return event.msg.reply("Current Ping: **{}** ms".format(round(self.client.gw.latency * 1000, 2)))
 
     # @Plugin.schedule(60, init=False)
     # def update_servers(self):
